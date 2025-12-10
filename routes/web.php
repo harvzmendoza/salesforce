@@ -60,3 +60,7 @@ Route::get('/dashboard', function () {
 Route::get('/tasks', function () {
     return view('tasks');
 })->middleware('auth');
+
+Route::get('/attendance', function () {
+    return view('tasks');
+})->middleware('auth');
