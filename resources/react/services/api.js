@@ -13,7 +13,34 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
+    withCredentials: true,
 });
+
+// Configure axios to automatically send CSRF token
+api.interceptors.request.use((config) => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (token) {
+        config.headers['X-CSRF-TOKEN'] = token;
+    }
+    
+    // Get XSRF token from cookie
+    const xsrfToken = getCookie('XSRF-TOKEN');
+    if (xsrfToken) {
+        config.headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrfToken);
+    }
+    
+    return config;
+});
+
+// Helper to get cookie value
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    return null;
+}
 
 // Helper to generate temporary ID for offline tasks
 const generateTempId = () => {

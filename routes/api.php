@@ -1,13 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\TaskController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
-Route::apiResource('tasks', TaskController::class);
+Route::apiResource('tasks', TaskController::class)->middleware('auth:sanctum');
 
-Route::post('/tasks/batch-sync', [TaskController::class, 'batchSync']);
+Route::post('/tasks/batch-sync', [TaskController::class, 'batchSync'])->middleware('auth:sanctum');

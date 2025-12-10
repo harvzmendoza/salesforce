@@ -48,6 +48,15 @@ Route::get('/sw.js', function () {
         ->header('Content-Type', 'application/javascript');
 });
 
-Route::get('/tasks', function () {
+// React SPA routes - all authenticated routes serve the same view
+Route::get('/login', function () {
     return view('tasks');
 });
+
+Route::get('/dashboard', function () {
+    return view('tasks');
+})->middleware('auth');
+
+Route::get('/tasks', function () {
+    return view('tasks');
+})->middleware('auth');
