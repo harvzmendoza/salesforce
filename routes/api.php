@@ -9,3 +9,5 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::apiResource('tasks', TaskController::class);
+
+Route::post('/tasks/batch-sync', [TaskController::class, 'batchSync']);

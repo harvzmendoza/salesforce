@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Icon Generator</title>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p>This page generates PWA icons from a simple design.</p>
+    <canvas id="iconCanvas" width="512" height="512" style="border: 1px solid #ccc; display: block; margin: 20px 0;"></canvas>
+    <div>
+        <button onclick="generateIcons()">Generate Icons</button>
+        <button onclick="downloadIcon(192)">Download 192x192</button>
+        <button onclick="downloadIcon(512)">Download 512x512</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('iconCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function generateIcons() {
+            // Clear canvas
+            ctx.clearRect(0, 0, 512, 512);
+            
+            // Background
+            ctx.fillStyle = '#1b1b18';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Draw a simple "S" logo
+            ctx.fillStyle = '#FDFDFC';
+            ctx.font = 'bold 300px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', 256, 256);
+        }
+
+        function downloadIcon(size) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Draw background
+            tempCtx.fillStyle = '#1b1b18';
+            tempCtx.fillRect(0, 0, size, size);
+            
+            // Draw "S" logo scaled
+            tempCtx.fillStyle = '#FDFDFC';
+            tempCtx.font = `bold ${size * 0.6}px Arial`;
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText('S', size / 2, size / 2);
+            
+            // Download
+            tempCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pwa-${size}x${size}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Generate initial icon
+        generateIcons();
+    </script>
+</body>
+</html>
+

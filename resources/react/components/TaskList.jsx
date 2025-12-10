@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { taskApi } from '../services/api';
+import { initDB, getTasks } from '../services/offlineStorage';
 import TaskForm from './TaskForm';
 import TaskItem from './TaskItem';
+import SyncButton from './SyncButton';
 
 export default function TaskList() {
     const [tasks, setTasks] = useState([]);
@@ -9,30 +11,78 @@ export default function TaskList() {
     const [error, setError] = useState(null);
     const [editingTask, setEditingTask] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [dbInitialized, setDbInitialized] = useState(false);
+
+    // Initialize IndexedDB on mount
+    useEffect(() => {
+        const initializeDB = async () => {
+            try {
+                await initDB();
+                setDbInitialized(true);
+            } catch (err) {
+                console.error('Failed to initialize database:', err);
+                setError('Failed to initialize offline storage');
+            }
+        };
+
+        initializeDB();
+    }, []);
 
     const fetchTasks = async () => {
         try {
             setLoading(true);
             setError(null);
+            
+            // Wait for DB to be initialized
+            if (!dbInitialized) {
+                await new Promise((resolve) => {
+                    const checkDB = setInterval(() => {
+                        if (dbInitialized) {
+                            clearInterval(checkDB);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
             const data = await taskApi.getAll();
             setTasks(data);
         } catch (err) {
             setError('Failed to fetch tasks. Please try again.');
             console.error('Error fetching tasks:', err);
+            
+            // Try to load from local storage as fallback
+            try {
+                const localTasks = await getTasks();
+                if (localTasks.length > 0) {
+                    setTasks(localTasks);
+                    setError('Using offline data. Sync when online to get latest updates.');
+                }
+            } catch (localErr) {
+                console.error('Error loading from local storage:', localErr);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchTasks();
-    }, []);
+        if (dbInitialized) {
+            fetchTasks();
+        }
+    }, [dbInitialized]);
 
     const handleCreate = async (taskData) => {
         try {
             const newTask = await taskApi.create(taskData);
             setTasks([newTask, ...tasks]);
             setShowForm(false);
+            
+            // Show message if offline
+            const { isOnline } = await import('../services/offlineStorage');
+            if (!isOnline()) {
+                setError('Task saved offline. Sync when online to save to server.');
+            }
         } catch (err) {
             setError('Failed to create task. Please try again.');
             console.error('Error creating task:', err);
@@ -44,6 +94,12 @@ export default function TaskList() {
             const updatedTask = await taskApi.update(id, taskData);
             setTasks(tasks.map((task) => (task.id === id ? updatedTask : task)));
             setEditingTask(null);
+            
+            // Show message if offline
+            const { isOnline } = await import('../services/offlineStorage');
+            if (!isOnline()) {
+                setError('Task updated offline. Sync when online to save to server.');
+            }
         } catch (err) {
             setError('Failed to update task. Please try again.');
             console.error('Error updating task:', err);
@@ -58,6 +114,12 @@ export default function TaskList() {
         try {
             await taskApi.delete(id);
             setTasks(tasks.filter((task) => task.id !== id));
+            
+            // Show message if offline
+            const { isOnline } = await import('../services/offlineStorage');
+            if (!isOnline()) {
+                setError('Task deleted offline. Sync when online to delete from server.');
+            }
         } catch (err) {
             setError('Failed to delete task. Please try again.');
             console.error('Error deleting task:', err);
@@ -79,21 +141,29 @@ export default function TaskList() {
         );
     }
 
+    const handleSyncComplete = () => {
+        // Refresh tasks after sync
+        fetchTasks();
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
                 <h1 className="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">
                     Tasks
                 </h1>
-                <button
-                    onClick={() => {
-                        setShowForm(!showForm);
-                        setEditingTask(null);
-                    }}
-                    className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors"
-                >
-                    {showForm ? 'Cancel' : 'Add Task'}
-                </button>
+                <div className="flex items-center gap-3">
+                    <SyncButton onSyncComplete={handleSyncComplete} />
+                    <button
+                        onClick={() => {
+                            setShowForm(!showForm);
+                            setEditingTask(null);
+                        }}
+                        className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors"
+                    >
+                        {showForm ? 'Cancel' : 'Add Task'}
+                    </button>
+                </div>
             </div>
 
             {error && (

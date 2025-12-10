@@ -57,4 +57,54 @@ class TaskController extends Controller
 
         return response()->json(null, 204);
     }
+
+    /**
+     * Batch sync operations for offline-first apps.
+     */
+    public function batchSync(): JsonResponse
+    {
+        $operations = request()->input('operations', []);
+        $results = [
+            'created' => [],
+            'updated' => [],
+            'deleted' => [],
+            'errors' => [],
+        ];
+
+        foreach ($operations as $operation) {
+            try {
+                switch ($operation['type']) {
+                    case 'create':
+                        $task = Task::create($operation['data']);
+                        $results['created'][] = $task;
+                        break;
+
+                    case 'update':
+                        $task = Task::findOrFail($operation['taskId']);
+                        $task->update($operation['data']);
+                        $results['updated'][] = $task;
+                        break;
+
+                    case 'delete':
+                        $task = Task::findOrFail($operation['taskId']);
+                        $task->delete();
+                        $results['deleted'][] = ['id' => $operation['taskId']];
+                        break;
+
+                    default:
+                        $results['errors'][] = [
+                            'operation' => $operation,
+                            'error' => 'Unknown operation type',
+                        ];
+                }
+            } catch (\Exception $e) {
+                $results['errors'][] = [
+                    'operation' => $operation,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json($results);
+    }
 }
