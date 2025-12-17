@@ -19,6 +19,7 @@ export default function Sidebar() {
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
         { path: '/tasks', label: 'Tasks', icon: '✓' },
         { path: '/attendance', label: 'Attendance', icon: '⏰' },
+        { path: '/stores', label: 'Stores', icon: '🏪' },
     ];
 
     return (

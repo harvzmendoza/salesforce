@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 
 export default function Attendance() {
@@ -76,6 +76,11 @@ export default function Attendance() {
             }
         );
     };
+
+    useEffect(() => {
+        getLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const submitAttendance = async (type) => {
         setLoading(true);
@@ -264,13 +269,10 @@ export default function Attendance() {
                                 </p>
                             </div>
                         ) : (
-                            <div>
-                                <button
-                                    onClick={getLocation}
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                                >
-                                    Get Location
-                                </button>
+                            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                                <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                                    Trying to detect your location...
+                                </p>
                                 {locationError && (
                                     <p className="mt-2 text-sm text-red-600 dark:text-red-400">
                                         {locationError}

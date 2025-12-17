@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,3 +15,4 @@ Route::apiResource('tasks', TaskController::class)->middleware('auth:sanctum');
 Route::post('/tasks/batch-sync', [TaskController::class, 'batchSync'])->middleware('auth:sanctum');
 
 Route::apiResource('attendances', AttendanceController::class)->middleware('auth:sanctum');
+Route::get('/stores', [StoreController::class, 'index'])->middleware('auth:sanctum');

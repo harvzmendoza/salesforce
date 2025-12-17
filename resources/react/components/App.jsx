@@ -6,6 +6,7 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import TaskList from './TaskList';
 import Attendance from './Attendance';
+import Stores from './Stores';
 import Sidebar from './Sidebar';
 import OfflineIndicator from './OfflineIndicator';
 
@@ -105,6 +106,16 @@ export default function App() {
                             <ProtectedRoute>
                                 <Layout>
                                     <Attendance />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/stores"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <Stores />
                                 </Layout>
                             </ProtectedRoute>
                         }
