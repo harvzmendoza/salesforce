@@ -3,7 +3,6 @@ import { taskApi } from '../services/api';
 import { initDB, getTasks } from '../services/offlineStorage';
 import TaskForm from './TaskForm';
 import TaskItem from './TaskItem';
-import SyncButton from './SyncButton';
 
 export default function TaskList() {
     const [tasks, setTasks] = useState([]);
@@ -141,11 +140,6 @@ export default function TaskList() {
         );
     }
 
-    const handleSyncComplete = () => {
-        // Refresh tasks after sync
-        fetchTasks();
-    };
-
     return (
         <div className="max-w-4xl mx-auto p-6">
             <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
@@ -153,7 +147,6 @@ export default function TaskList() {
                     Tasks
                 </h1>
                 <div className="flex items-center gap-3">
-                    <SyncButton onSyncComplete={handleSyncComplete} />
                     <button
                         onClick={() => {
                             setShowForm(!showForm);

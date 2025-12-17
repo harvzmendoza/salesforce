@@ -7,6 +7,8 @@ import Dashboard from './Dashboard';
 import TaskList from './TaskList';
 import Attendance from './Attendance';
 import Stores from './Stores';
+import SyncPage from './SyncPage';
+import DownloadPage from './DownloadPage';
 import Sidebar from './Sidebar';
 import OfflineIndicator from './OfflineIndicator';
 
@@ -116,6 +118,26 @@ export default function App() {
                             <ProtectedRoute>
                                 <Layout>
                                     <Stores />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/sync"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <SyncPage />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/download"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <DownloadPage />
                                 </Layout>
                             </ProtectedRoute>
                         }
