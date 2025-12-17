@@ -17,7 +17,7 @@ export default function Sidebar() {
 
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-        { path: '/tasks', label: 'Tasks', icon: '✓' },
+        // { path: '/tasks', label: 'Tasks', icon: '✓' },
         { path: '/attendance', label: 'Attendance', icon: '⏰' },
         { path: '/stores', label: 'Stores', icon: '🏪' },
     ];
