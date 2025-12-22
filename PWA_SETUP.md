@@ -98,3 +98,4 @@ You need to create PWA icons before the app can be fully installed:
 - API calls use network-first strategy, so they'll try network first, then fall back to cache
 
 
+
