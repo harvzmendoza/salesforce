@@ -7,10 +7,9 @@ import Dashboard from './Dashboard';
 import TaskList from './TaskList';
 import Attendance from './Attendance';
 import Stores from './Stores';
-import SyncPage from './SyncPage';
-import DownloadPage from './DownloadPage';
 import Sidebar from './Sidebar';
 import OfflineIndicator from './OfflineIndicator';
+import AutoSync from './AutoSync';
 
 function Layout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -41,6 +40,7 @@ function Layout({ children }) {
 
                 {children}
                 <OfflineIndicator />
+                <AutoSync />
             </div>
 
             {/* Mobile sidebar overlay */}
@@ -118,26 +118,6 @@ export default function App() {
                             <ProtectedRoute>
                                 <Layout>
                                     <Stores />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/sync"
-                        element={
-                            <ProtectedRoute>
-                                <Layout>
-                                    <SyncPage />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/download"
-                        element={
-                            <ProtectedRoute>
-                                <Layout>
-                                    <DownloadPage />
                                 </Layout>
                             </ProtectedRoute>
                         }

@@ -24,8 +24,6 @@ export default function Sidebar() {
         { path: '/attendance', label: 'Attendance', icon: '⏰' },
         { path: '/stores', label: 'Stores', icon: '🏪' },
         { path: '/reports', label: 'Reports', icon: '📈' },
-        { path: '/sync', label: 'Sync', icon: '🔄' },
-        { path: '/download', label: 'Download', icon: '⬇️' },
     ];
 
     return (
