@@ -7,6 +7,10 @@ import Dashboard from './Dashboard';
 import TaskList from './TaskList';
 import Attendance from './Attendance';
 import Stores from './Stores';
+import Inventory from './Inventory';
+import Collection from './Collection';
+import OffTerritory from './OffTerritory';
+import Reports from './Reports';
 import Sidebar from './Sidebar';
 import OfflineIndicator from './OfflineIndicator';
 import AutoSync from './AutoSync';
@@ -118,6 +122,46 @@ export default function App() {
                             <ProtectedRoute>
                                 <Layout>
                                     <Stores />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/inventory"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <Inventory />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/collection"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <Collection />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/off-territory"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <OffTerritory />
+                                </Layout>
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/reports"
+                        element={
+                            <ProtectedRoute>
+                                <Layout>
+                                    <Reports />
                                 </Layout>
                             </ProtectedRoute>
                         }
