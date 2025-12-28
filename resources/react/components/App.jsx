@@ -14,6 +14,7 @@ import Reports from './Reports';
 import Sidebar from './Sidebar';
 import OfflineIndicator from './OfflineIndicator';
 import AutoSync from './AutoSync';
+import logo from '../logo.jpeg';
 
 function Layout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -37,9 +38,16 @@ function Layout({ children }) {
                         <span className="sr-only">Open navigation</span>
                         <span className="text-xl">☰</span>
                     </button>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Salesforce
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <img 
+                            src={logo} 
+                            alt="Salesforce" 
+                            className="h-6 w-auto"
+                        />
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Salesforce
+                        </span>
+                    </div>
                 </div>
 
                 {children}
