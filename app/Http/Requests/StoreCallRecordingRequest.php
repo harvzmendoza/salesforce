@@ -23,10 +23,9 @@ class StoreCallRecordingRequest extends FormRequest
     {
         return [
             'call_schedule_id' => ['required', 'integer', 'exists:call_schedules,id'],
-            'product_id' => ['required', 'array'],
+            'product_id' => ['required', 'array', 'min:1'],
             'product_id.*' => ['integer', 'exists:products,id'],
-            'signature' => ['required', 'string'],
-            'post_activity' => ['required', 'string'],
+            'signature' => ['required', 'string', 'min:10'],
         ];
     }
 

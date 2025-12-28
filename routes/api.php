@@ -23,3 +23,4 @@ Route::get('/products', [ProductController::class, 'index'])->middleware('auth:s
 Route::post('/call-schedules/get-or-create', [CallScheduleController::class, 'getOrCreate'])->middleware('auth:sanctum');
 Route::apiResource('call-recordings', CallRecordingController::class)->middleware('auth:sanctum');
 Route::get('/call-recordings/schedule/{callScheduleId}', [CallRecordingController::class, 'getBySchedule'])->middleware('auth:sanctum');
+Route::put('/call-recordings/{id}/post-activity', [CallRecordingController::class, 'updatePostActivity'])->middleware('auth:sanctum');

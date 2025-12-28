@@ -1,11 +1,26 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import SignatureCanvas from './SignatureCanvas';
 
 const STEPS = {
     PRODUCT_SELECTION: 1,
     PRODUCT_PREVIEW: 2,
     SIGNATURE: 3,
     POST_ACTIVITY: 4,
+};
+
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    // If it's a storage path, prepend the storage URL
+    if (imagePath.startsWith('storage/') || imagePath.startsWith('/storage/')) {
+        return `/${imagePath.replace(/^\/?storage\//, 'storage/')}`;
+    }
+    // Otherwise, assume it's a relative path
+    return `/${imagePath}`;
 };
 
 export default function CallRecordingForm({ callScheduleId, storeName, onSave, onCancel }) {
@@ -19,6 +34,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [errors, setErrors] = useState({});
     const [existingRecording, setExistingRecording] = useState(null);
+    const [submittedRecordingId, setSubmittedRecordingId] = useState(null);
 
     useEffect(() => {
         if (callScheduleId) {
@@ -44,6 +60,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
         try {
             const response = await api.get(`/call-recordings/schedule/${callScheduleId}`);
             setExistingRecording(response.data);
+            setSubmittedRecordingId(response.data.id);
             
             // Decode product IDs
             if (response.data.product_id) {
@@ -65,6 +82,11 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             
             setSignature(response.data.signature || '');
             setPostActivity(response.data.post_activity || '');
+            
+            // If post_activity exists, go to that step
+            if (response.data.post_activity) {
+                setStep(STEPS.POST_ACTIVITY);
+            }
         } catch (err) {
             if (err.response?.status !== 404) {
                 console.error('Failed to load existing recording', err);
@@ -95,11 +117,12 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
         } else if (step === STEPS.PRODUCT_PREVIEW) {
             setStep(STEPS.SIGNATURE);
         } else if (step === STEPS.SIGNATURE) {
-            if (!signature.trim()) {
+            if (!signature || (typeof signature === 'string' && !signature.trim())) {
                 setErrors({ signature: 'Signature is required' });
                 return;
             }
-            setStep(STEPS.POST_ACTIVITY);
+            // Submit form without post_activity
+            handleSubmit();
         }
         setErrors({});
     };
@@ -116,11 +139,13 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+        }
         setErrors({});
         
-        if (!postActivity.trim()) {
-            setErrors({ post_activity: 'Post activity is required' });
+        if (!signature || (typeof signature === 'string' && !signature.trim())) {
+            setErrors({ signature: 'Signature is required' });
             return;
         }
 
@@ -130,8 +155,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             const data = {
                 call_schedule_id: callScheduleId,
                 product_id: selectedProductIds,
-                signature: signature.trim(),
-                post_activity: postActivity.trim(),
+                signature: typeof signature === 'string' ? signature.trim() : signature,
             };
 
             let response;
@@ -141,6 +165,51 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                 response = await api.post('/call-recordings', data);
             }
 
+            setSubmittedRecordingId(response.data.id);
+            setExistingRecording(response.data);
+            
+            // Move to post activity step after successful submission
+            setStep(STEPS.POST_ACTIVITY);
+        } catch (err) {
+            console.error('Error saving recording:', err);
+            console.error('Error response:', err.response?.data);
+            
+            if (err.response?.status === 422) {
+                const validationErrors = err.response.data.errors || {};
+                setErrors(validationErrors);
+                
+                // Show general error if no specific field errors
+                if (Object.keys(validationErrors).length === 0) {
+                    setErrors({ general: err.response.data.message || 'Validation failed. Please check your input.' });
+                }
+            } else if (err.response?.data?.message) {
+                setErrors({ general: err.response.data.message });
+            } else {
+                setErrors({ general: `Failed to save recording. ${err.message || 'Please try again.'}` });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePostActivitySubmit = async () => {
+        if (!postActivity.trim()) {
+            setErrors({ post_activity: 'Post activity is required' });
+            return;
+        }
+
+        if (!submittedRecordingId) {
+            setErrors({ general: 'Recording not found. Please try again.' });
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await api.put(`/call-recordings/${submittedRecordingId}/post-activity`, {
+                post_activity: postActivity.trim(),
+            });
+
             if (onSave) {
                 onSave(response.data);
             }
@@ -148,7 +217,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             if (err.response?.status === 422) {
                 setErrors(err.response.data.errors || {});
             } else {
-                setErrors({ general: 'Failed to save recording. Please try again.' });
+                setErrors({ general: 'Failed to save post activity. Please try again.' });
             }
         } finally {
             setLoading(false);
@@ -167,49 +236,55 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                 <p className="text-sm text-gray-600 dark:text-gray-300">No products available.</p>
             ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {products.map((product) => (
-                        <label
-                            key={product.id}
-                            className="flex items-start gap-3 p-3 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm hover:border-[#19140035] dark:hover:border-[#62605b] transition-colors cursor-pointer"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selectedProductIds.includes(product.id)}
-                                onChange={() => handleProductToggle(product.id)}
-                                className="mt-1 w-4 h-4 rounded border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
-                            />
-                            <div className="flex-1">
-                                <div className="flex items-start gap-3">
-                                    {product.product_image && (
-                                        <img
-                                            src={product.product_image}
-                                            alt={product.product_name}
-                                            className="w-16 h-16 object-cover rounded"
-                                        />
-                                    )}
-                                    <div className="flex-1">
-                                        <p className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                            {product.product_name}
-                                        </p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            {product.product_description}
-                                        </p>
-                                        <div className="flex gap-4 mt-2 text-sm">
-                                            <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                Price: {product.product_price}
-                                            </span>
-                                            <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                Qty: {product.product_quantity}
-                                            </span>
-                                            <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                Discount: {product.product_discount}
-                                            </span>
+                    {products.map((product) => {
+                        const imageUrl = getImageUrl(product.product_image);
+                        return (
+                            <label
+                                key={product.id}
+                                className="flex items-start gap-3 p-3 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm hover:border-[#19140035] dark:hover:border-[#62605b] transition-colors cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={selectedProductIds.includes(product.id)}
+                                    onChange={() => handleProductToggle(product.id)}
+                                    className="mt-1 w-4 h-4 rounded border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                />
+                                <div className="flex-1">
+                                    <div className="flex items-start gap-3">
+                                        {imageUrl && (
+                                            <img
+                                                src={imageUrl}
+                                                alt={product.product_name}
+                                                className="w-16 h-16 object-cover rounded border border-[#e3e3e0] dark:border-[#3E3E3A]"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div className="flex-1">
+                                            <p className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                {product.product_name}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                {product.product_description}
+                                            </p>
+                                            <div className="flex gap-4 mt-2 text-sm">
+                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    Price: {product.product_price}
+                                                </span>
+                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    Qty: {product.product_quantity}
+                                                </span>
+                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    Discount: {product.product_discount}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </label>
-                    ))}
+                            </label>
+                        );
+                    })}
                 </div>
             )}
             
@@ -221,100 +296,93 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
         </div>
     );
 
-    const renderProductPreview = () => (
-        <div>
-            <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
-                Step 2: Review Selected Products
-            </h3>
-            
-            {selectedProducts.length === 0 ? (
-                <p className="text-sm text-gray-600 dark:text-gray-300">No products selected.</p>
-            ) : (
-                <div className="space-y-4">
-                    {selectedProducts.map((product) => (
-                        <div
-                            key={product.id}
-                            className="p-4 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm"
-                        >
-                            <div className="flex items-start gap-3">
-                                {product.product_image && (
-                                    <img
-                                        src={product.product_image}
-                                        alt={product.product_name}
-                                        className="w-20 h-20 object-cover rounded"
-                                    />
-                                )}
-                                <div className="flex-1">
-                                    <p className="font-medium text-lg text-[#1b1b18] dark:text-[#EDEDEC]">
-                                        {product.product_name}
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        {product.product_description}
-                                    </p>
-                                    <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
-                                        <div>
-                                            <span className="text-gray-600 dark:text-gray-400">Price:</span>
-                                            <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                {product.product_price}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-600 dark:text-gray-400">Quantity:</span>
-                                            <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                {product.product_quantity}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-600 dark:text-gray-400">Discount:</span>
-                                            <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                                {product.product_discount}
-                                            </span>
+    const renderProductPreview = () => {
+        return (
+            <div>
+                <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
+                    Step 2: Review Selected Products
+                </h3>
+                
+                {selectedProducts.length === 0 ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">No products selected.</p>
+                ) : (
+                    <div className="space-y-4">
+                        {selectedProducts.map((product) => {
+                            const imageUrl = getImageUrl(product.product_image);
+                            return (
+                                <div
+                                    key={product.id}
+                                    className="p-4 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        {imageUrl && (
+                                            <img
+                                                src={imageUrl}
+                                                alt={product.product_name}
+                                                className="w-20 h-20 object-cover rounded border border-[#e3e3e0] dark:border-[#3E3E3A]"
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div className="flex-1">
+                                            <p className="font-medium text-lg text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                {product.product_name}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                {product.product_description}
+                                            </p>
+                                            <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
+                                                <div>
+                                                    <span className="text-gray-600 dark:text-gray-400">Price:</span>
+                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                        {product.product_price}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600 dark:text-gray-400">Quantity:</span>
+                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                        {product.product_quantity}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600 dark:text-gray-400">Discount:</span>
+                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                        {product.product_discount}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const renderSignature = () => (
         <div>
             <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
-                Step 3: Signature
+                Step 3: Digital Signature
             </h3>
             
             <div>
-                <label
-                    htmlFor="signature"
-                    className="block text-sm font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]"
-                >
-                    Signature *
+                <label className="block text-sm font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]">
+                    Draw your signature *
                 </label>
-                <textarea
-                    id="signature"
+                <SignatureCanvas
                     value={signature}
-                    onChange={(e) => {
-                        setSignature(e.target.value);
+                    onChange={(dataUrl) => {
+                        setSignature(dataUrl);
                         if (errors.signature) {
                             setErrors((prev) => ({ ...prev, signature: null }));
                         }
                     }}
-                    rows={6}
-                    className={`w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] ${
-                        errors.signature
-                            ? 'border-[#F53003] dark:border-[#FF4433]'
-                            : 'border-[#e3e3e0] dark:border-[#3E3E3A]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]`}
-                    placeholder="Enter signature"
+                    error={errors.signature}
                 />
-                {errors.signature && (
-                    <p className="mt-1 text-sm text-[#F53003] dark:text-[#FF4433]">
-                        {errors.signature}
-                    </p>
-                )}
             </div>
         </div>
     );
@@ -324,6 +392,9 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
                 Step 4: Post Activity
             </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Recording has been saved. Please add post activity notes.
+            </p>
             
             <div>
                 <label
@@ -406,14 +477,10 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
-                    {step === STEPS.PRODUCT_SELECTION && renderProductSelection()}
-                    {step === STEPS.PRODUCT_PREVIEW && renderProductPreview()}
-                    {step === STEPS.SIGNATURE && renderSignature()}
-                    {step === STEPS.POST_ACTIVITY && renderPostActivity()}
-
-                    <div className="flex gap-3 mt-6">
-                        {step > STEPS.PRODUCT_SELECTION && (
+                {step === STEPS.POST_ACTIVITY ? (
+                    <div>
+                        {renderPostActivity()}
+                        <div className="flex gap-3 mt-6">
                             <button
                                 type="button"
                                 onClick={handleBack}
@@ -422,36 +489,72 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                             >
                                 Back
                             </button>
-                        )}
-                        <div className="flex-1" />
-                        {step < STEPS.POST_ACTIVITY ? (
+                            <div className="flex-1" />
                             <button
                                 type="button"
-                                onClick={handleNext}
+                                onClick={handlePostActivitySubmit}
                                 disabled={loading}
                                 className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Next
+                                {loading ? 'Saving...' : 'Save Post Activity'}
                             </button>
-                        ) : (
                             <button
-                                type="submit"
+                                type="button"
+                                onClick={onCancel}
                                 disabled={loading}
-                                className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Saving...' : existingRecording ? 'Update Recording' : 'Create Recording'}
+                                Close
                             </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={onCancel}
-                            disabled={loading}
-                            className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Cancel
-                        </button>
+                        </div>
                     </div>
-                </form>
+                ) : (
+                    <form onSubmit={handleSubmit}>
+                        {step === STEPS.PRODUCT_SELECTION && renderProductSelection()}
+                        {step === STEPS.PRODUCT_PREVIEW && renderProductPreview()}
+                        {step === STEPS.SIGNATURE && renderSignature()}
+
+                        <div className="flex gap-3 mt-6">
+                            {step > STEPS.PRODUCT_SELECTION && (
+                                <button
+                                    type="button"
+                                    onClick={handleBack}
+                                    disabled={loading}
+                                    className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Back
+                                </button>
+                            )}
+                            <div className="flex-1" />
+                            {step < STEPS.SIGNATURE ? (
+                                <button
+                                    type="button"
+                                    onClick={handleNext}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? 'Saving...' : existingRecording ? 'Update Recording' : 'Submit Recording'}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={onCancel}
+                                disabled={loading}
+                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
         </div>
     );

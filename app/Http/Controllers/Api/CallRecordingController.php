@@ -77,6 +77,24 @@ class CallRecordingController extends Controller
     }
 
     /**
+     * Update post activity for a recording.
+     */
+    public function updatePostActivity(int $id): JsonResponse
+    {
+        $request = request();
+        $request->validate([
+            'post_activity' => ['required', 'string'],
+        ]);
+
+        $recording = CallRecording::findOrFail($id);
+        $recording->update([
+            'post_activity' => $request->post_activity,
+        ]);
+
+        return response()->json($recording->load('callSchedule'));
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(CallRecording $callRecording): JsonResponse

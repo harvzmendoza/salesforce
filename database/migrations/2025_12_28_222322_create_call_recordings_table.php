@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('call_schedule_id');
             $table->longText('product_id');
             $table->longText('signature');
-            $table->longText('post_activity');
+            $table->longText('post_activity')->nullable();
             $table->timestamps();
         });
     }
