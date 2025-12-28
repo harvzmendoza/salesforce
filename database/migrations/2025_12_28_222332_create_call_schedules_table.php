@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('territories', function (Blueprint $table) {
+        Schema::create('call_schedules', function (Blueprint $table) {
             $table->id();
-            $table->string('territory_name');
-            $table->integer('district_id');
+            $table->integer('store_id');
+            $table->date('call_date');
+            $table->integer('user_id');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('territories');
+        Schema::dropIfExists('call_schedules');
     }
 };
