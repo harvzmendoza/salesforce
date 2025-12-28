@@ -25,7 +25,10 @@ class CallRecordingController extends Controller
      */
     public function store(StoreCallRecordingRequest $request): JsonResponse
     {
-        $recording = CallRecording::create($request->validated());
+        $data = $request->validated();
+        $data['product_id'] = json_encode($data['product_id']);
+
+        $recording = CallRecording::create($data);
 
         return response()->json($recording->load('callSchedule'), 201);
     }
@@ -49,6 +52,14 @@ class CallRecordingController extends Controller
             return response()->json(['message' => 'Recording not found'], 404);
         }
 
+        // Decode product_id JSON and load products
+        if ($recording->product_id) {
+            $productIds = json_decode($recording->product_id, true);
+            if (is_array($productIds)) {
+                $recording->products = \App\Models\Product::whereIn('id', $productIds)->get();
+            }
+        }
+
         return response()->json($recording->load('callSchedule'));
     }
 
@@ -57,7 +68,10 @@ class CallRecordingController extends Controller
      */
     public function update(UpdateCallRecordingRequest $request, CallRecording $callRecording): JsonResponse
     {
-        $callRecording->update($request->validated());
+        $data = $request->validated();
+        $data['product_id'] = json_encode($data['product_id']);
+
+        $callRecording->update($data);
 
         return response()->json($callRecording->load('callSchedule'));
     }

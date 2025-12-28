@@ -23,12 +23,19 @@ class StoreCallRecordingRequest extends FormRequest
     {
         return [
             'call_schedule_id' => ['required', 'integer', 'exists:call_schedules,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'string', 'max:255'],
-            'quantity' => ['required', 'string', 'max:255'],
-            'discount' => ['required', 'string', 'max:255'],
-            'signature' => ['required', 'string', 'max:255'],
+            'product_id' => ['required', 'array'],
+            'product_id.*' => ['integer', 'exists:products,id'],
+            'signature' => ['required', 'string'],
             'post_activity' => ['required', 'string'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('product_id') && is_string($this->product_id)) {
+            $this->merge([
+                'product_id' => json_decode($this->product_id, true),
+            ]);
+        }
     }
 }
