@@ -193,11 +193,6 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     };
 
     const handlePostActivitySubmit = async () => {
-        if (!postActivity.trim()) {
-            setErrors({ post_activity: 'Post activity is required' });
-            return;
-        }
-
         if (!submittedRecordingId) {
             setErrors({ general: 'Recording not found. Please try again.' });
             return;
@@ -207,7 +202,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
         try {
             const response = await api.put(`/call-recordings/${submittedRecordingId}/post-activity`, {
-                post_activity: postActivity.trim(),
+                post_activity: postActivity.trim() || null,
             });
 
             if (onSave) {
@@ -390,10 +385,10 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     const renderPostActivity = () => (
         <div>
             <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
-                Step 4: Post Activity
+                Step 4: Post Activity (Optional)
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Recording has been saved. Please add post activity notes.
+                Recording has been saved. You can optionally add post activity notes.
             </p>
             
             <div>
@@ -401,7 +396,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                     htmlFor="post_activity"
                     className="block text-sm font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]"
                 >
-                    Post Activity *
+                    Post Activity (Optional)
                 </label>
                 <textarea
                     id="post_activity"
@@ -497,6 +492,18 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                 className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Saving...' : 'Save Post Activity'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (onSave) {
+                                        onSave(existingRecording);
+                                    }
+                                }}
+                                disabled={loading}
+                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Skip
                             </button>
                             <button
                                 type="button"

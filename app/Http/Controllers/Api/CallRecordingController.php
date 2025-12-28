@@ -83,12 +83,12 @@ class CallRecordingController extends Controller
     {
         $request = request();
         $request->validate([
-            'post_activity' => ['required', 'string'],
+            'post_activity' => ['nullable', 'string'],
         ]);
 
         $recording = CallRecording::findOrFail($id);
         $recording->update([
-            'post_activity' => $request->post_activity,
+            'post_activity' => $request->post_activity ?: null,
         ]);
 
         return response()->json($recording->load('callSchedule'));
