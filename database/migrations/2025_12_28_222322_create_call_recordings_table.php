@@ -14,21 +14,10 @@ return new class extends Migration
         Schema::create('call_recordings', function (Blueprint $table) {
             $table->id();
             $table->integer('call_schedule_id');
-            $table->string('name');
-            $table->string('price');
-            $table->string('quantity');
-            $table->string('discount');
-            $table->string('signature');
+            $table->longText('product_id');
+            $table->longText('signature');
             $table->longText('post_activity');
             $table->timestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('call_recordings');
     }
 };

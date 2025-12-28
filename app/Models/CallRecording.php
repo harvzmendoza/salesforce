@@ -12,10 +12,7 @@ class CallRecording extends Model
 
     protected $fillable = [
         'call_schedule_id',
-        'name',
-        'price',
-        'quantity',
-        'discount',
+        'product_id',
         'signature',
         'post_activity',
     ];
