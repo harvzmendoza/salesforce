@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import CallRecordingForm from './CallRecordingForm';
 
 const getTodayDate = () => {
     const today = new Date();
@@ -16,6 +17,9 @@ export default function Stores() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [callDate, setCallDate] = useState(getTodayDate());
+    const [selectedStore, setSelectedStore] = useState(null);
+    const [callScheduleId, setCallScheduleId] = useState(null);
+    const [showForm, setShowForm] = useState(false);
 
     const fetchStores = useCallback(async () => {
         if (!user?.id) {
@@ -50,6 +54,43 @@ export default function Stores() {
 
     const clearFilters = () => {
         setCallDate(getTodayDate());
+    };
+
+    const handleStoreClick = async (store) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Get or create call schedule
+            const scheduleResponse = await api.post('/call-schedules/get-or-create', {
+                store_id: store.id,
+                call_date: callDate,
+                user_id: user.id,
+            });
+
+            setCallScheduleId(scheduleResponse.data.id);
+            setSelectedStore(store);
+            setShowForm(true);
+        } catch (err) {
+            console.error('Failed to get call schedule', err);
+            setError('Failed to open recording form. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFormSave = () => {
+        setShowForm(false);
+        setSelectedStore(null);
+        setCallScheduleId(null);
+        // Optionally refresh stores list
+        fetchStores();
+    };
+
+    const handleFormCancel = () => {
+        setShowForm(false);
+        setSelectedStore(null);
+        setCallScheduleId(null);
     };
 
     if (authLoading || (loading && stores.length === 0)) {
@@ -112,12 +153,24 @@ export default function Stores() {
                 <ul className="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-[#1a1a1a] rounded-lg shadow border border-gray-200 dark:border-gray-800">
                     {stores.map((store) => (
                         <li key={store.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#161615] transition-colors">
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            <button
+                                onClick={() => handleStoreClick(store)}
+                                className="text-sm font-medium text-gray-900 dark:text-white hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer text-left w-full"
+                            >
                                 {store.store_name}
-                            </span>
+                            </button>
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {showForm && callScheduleId && selectedStore && (
+                <CallRecordingForm
+                    callScheduleId={callScheduleId}
+                    storeName={selectedStore.store_name}
+                    onSave={handleFormSave}
+                    onCancel={handleFormCancel}
+                />
             )}
         </div>
     );

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AttendanceController;
-use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\CallRecordingController;
+use App\Http\Controllers\Api\CallScheduleController;
 use App\Http\Controllers\Api\StoreController;
+use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,3 +18,6 @@ Route::post('/tasks/batch-sync', [TaskController::class, 'batchSync'])->middlewa
 
 Route::apiResource('attendances', AttendanceController::class)->middleware('auth:sanctum');
 Route::get('/stores', [StoreController::class, 'index'])->middleware('auth:sanctum');
+Route::post('/call-schedules/get-or-create', [CallScheduleController::class, 'getOrCreate'])->middleware('auth:sanctum');
+Route::apiResource('call-recordings', CallRecordingController::class)->middleware('auth:sanctum');
+Route::get('/call-recordings/schedule/{callScheduleId}', [CallRecordingController::class, 'getBySchedule'])->middleware('auth:sanctum');
