@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import api from '../services/api';
+import { storesApi, callScheduleApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CallRecordingForm from './CallRecordingForm';
 
@@ -29,13 +29,41 @@ export default function Stores() {
         try {
             setLoading(true);
             setError(null);
-            const params = new URLSearchParams();
-            if (callDate) {
-                params.append('call_date', callDate);
+            let stores = await storesApi.getAll(callDate, user.id);
+            
+            // If offline or stores don't have recording status, enrich with local data
+            const { isOnline, getAllCallSchedules, getCallRecordingBySchedule } = await import('../services/offlineStorage');
+            if (!isOnline() || (stores.length > 0 && stores[0].has_recording === undefined)) {
+                // Get call schedules from local storage
+                const allSchedules = await getAllCallSchedules();
+                const relevantSchedules = allSchedules.filter(
+                    (s) => s.call_date === callDate && s.user_id === user.id
+                );
+                
+                // Enrich stores with recording status
+                stores = await Promise.all(
+                    stores.map(async (store) => {
+                        const schedule = relevantSchedules.find((s) => s.store_id === store.id);
+                        if (schedule) {
+                            const recording = await getCallRecordingBySchedule(schedule.id);
+                            return {
+                                ...store,
+                                has_recording: !!recording,
+                                has_post_activity: recording && !!recording.post_activity,
+                                call_schedule_id: schedule.id,
+                            };
+                        }
+                        return {
+                            ...store,
+                            has_recording: false,
+                            has_post_activity: false,
+                            call_schedule_id: null,
+                        };
+                    })
+                );
             }
-            params.append('user_id', user.id);
-            const response = await api.get(`/stores?${params.toString()}`);
-            setStores(response.data || []);
+            
+            setStores(stores || []);
         } catch (err) {
             console.error('Failed to load stores', err);
             setError('Failed to load stores. Please try again.');
@@ -61,14 +89,10 @@ export default function Stores() {
             setLoading(true);
             setError(null);
             
-            // Get or create call schedule
-            const scheduleResponse = await api.post('/call-schedules/get-or-create', {
-                store_id: store.id,
-                call_date: callDate,
-                user_id: user.id,
-            });
+            // Get or create call schedule (works offline)
+            const schedule = await callScheduleApi.getOrCreate(store.id, callDate, user.id);
 
-            setCallScheduleId(scheduleResponse.data.id);
+            setCallScheduleId(schedule.id);
             setSelectedStore(store);
             setShowForm(true);
         } catch (err) {
@@ -83,7 +107,7 @@ export default function Stores() {
         setShowForm(false);
         setSelectedStore(null);
         setCallScheduleId(null);
-        // Optionally refresh stores list
+        // Refresh stores list to show updated indicators
         fetchStores();
     };
 

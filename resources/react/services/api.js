@@ -5,6 +5,16 @@ import {
     deleteTask,
     addToSyncQueue,
     isOnline,
+    saveCallRecording,
+    getCallRecording,
+    getCallRecordingBySchedule,
+    saveCallSchedule,
+    getCallSchedule,
+    getCallScheduleByStoreDateUser,
+    saveStores,
+    getStores,
+    saveProducts,
+    getProducts,
 } from './offlineStorage';
 
 const api = axios.create({
@@ -45,6 +55,248 @@ function getCookie(name) {
 // Helper to generate temporary ID for offline tasks
 const generateTempId = () => {
     return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Call Recording API
+export const callRecordingApi = {
+    getBySchedule: async (callScheduleId) => {
+        if (isOnline()) {
+            try {
+                const response = await api.get(`/call-recordings/schedule/${callScheduleId}`);
+                await saveCallRecording(response.data);
+                return response.data;
+            } catch (error) {
+                console.warn('Failed to fetch from server, using local storage:', error);
+                return await getCallRecordingBySchedule(callScheduleId);
+            }
+        } else {
+            return await getCallRecordingBySchedule(callScheduleId);
+        }
+    },
+
+    create: async (data) => {
+        if (isOnline()) {
+            try {
+                const response = await api.post('/call-recordings', data);
+                await saveCallRecording(response.data);
+                return response.data;
+            } catch (error) {
+                console.warn('Failed to create on server, saving locally:', error);
+                const tempId = generateTempId();
+                const localRecording = {
+                    ...data,
+                    id: tempId,
+                    call_schedule_id: data.call_schedule_id,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                };
+                await saveCallRecording(localRecording);
+                await addToSyncQueue({
+                    type: 'create',
+                    resource: 'call-recording',
+                    data: localRecording,
+                });
+                return localRecording;
+            }
+        } else {
+            const tempId = generateTempId();
+            const localRecording = {
+                ...data,
+                id: tempId,
+                call_schedule_id: data.call_schedule_id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            };
+            await saveCallRecording(localRecording);
+            await addToSyncQueue({
+                type: 'create',
+                resource: 'call-recording',
+                data: localRecording,
+            });
+            return localRecording;
+        }
+    },
+
+    update: async (id, data) => {
+        if (isOnline()) {
+            try {
+                const response = await api.put(`/call-recordings/${id}`, data);
+                await saveCallRecording(response.data);
+                return response.data;
+            } catch (error) {
+                console.warn('Failed to update on server, saving locally:', error);
+                const updatedRecording = {
+                    ...data,
+                    id,
+                    updated_at: new Date().toISOString(),
+                };
+                await saveCallRecording(updatedRecording);
+                await addToSyncQueue({
+                    type: 'update',
+                    resource: 'call-recording',
+                    recordingId: id,
+                    data: updatedRecording,
+                });
+                return updatedRecording;
+            }
+        } else {
+            const updatedRecording = {
+                ...data,
+                id,
+                updated_at: new Date().toISOString(),
+            };
+            await saveCallRecording(updatedRecording);
+            await addToSyncQueue({
+                type: 'update',
+                resource: 'call-recording',
+                recordingId: id,
+                data: updatedRecording,
+            });
+            return updatedRecording;
+        }
+    },
+
+    updatePostActivity: async (id, postActivity) => {
+        if (isOnline()) {
+            try {
+                const response = await api.put(`/call-recordings/${id}/post-activity`, {
+                    post_activity: postActivity,
+                });
+                await saveCallRecording(response.data);
+                return response.data;
+            } catch (error) {
+                console.warn('Failed to update post activity on server, saving locally:', error);
+                const existing = await getCallRecording(id);
+                const updatedRecording = {
+                    ...existing,
+                    post_activity: postActivity,
+                    updated_at: new Date().toISOString(),
+                };
+                await saveCallRecording(updatedRecording);
+                await addToSyncQueue({
+                    type: 'update',
+                    resource: 'call-recording',
+                    recordingId: id,
+                    data: { post_activity: postActivity },
+                });
+                return updatedRecording;
+            }
+        } else {
+            const existing = await getCallRecording(id);
+            const updatedRecording = {
+                ...existing,
+                post_activity: postActivity,
+                updated_at: new Date().toISOString(),
+            };
+            await saveCallRecording(updatedRecording);
+            await addToSyncQueue({
+                type: 'update',
+                resource: 'call-recording',
+                recordingId: id,
+                data: { post_activity: postActivity },
+            });
+            return updatedRecording;
+        }
+    },
+};
+
+// Call Schedule API
+export const callScheduleApi = {
+    getOrCreate: async (storeId, callDate, userId) => {
+        if (isOnline()) {
+            try {
+                const response = await api.post('/call-schedules/get-or-create', {
+                    store_id: storeId,
+                    call_date: callDate,
+                    user_id: userId,
+                });
+                await saveCallSchedule(response.data);
+                return response.data;
+            } catch (error) {
+                console.warn('Failed to get/create on server, using local storage:', error);
+                let schedule = await getCallScheduleByStoreDateUser(storeId, callDate, userId);
+                if (!schedule) {
+                    const tempId = generateTempId();
+                    schedule = {
+                        id: tempId,
+                        store_id: storeId,
+                        call_date: callDate,
+                        user_id: userId,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                    };
+                    await saveCallSchedule(schedule);
+                    await addToSyncQueue({
+                        type: 'create',
+                        resource: 'call-schedule',
+                        data: schedule,
+                    });
+                }
+                return schedule;
+            }
+        } else {
+            let schedule = await getCallScheduleByStoreDateUser(storeId, callDate, userId);
+            if (!schedule) {
+                const tempId = generateTempId();
+                schedule = {
+                    id: tempId,
+                    store_id: storeId,
+                    call_date: callDate,
+                    user_id: userId,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                };
+                await saveCallSchedule(schedule);
+                await addToSyncQueue({
+                    type: 'create',
+                    resource: 'call-schedule',
+                    data: schedule,
+                });
+            }
+            return schedule;
+        }
+    },
+};
+
+// Stores API
+export const storesApi = {
+    getAll: async (callDate, userId) => {
+        if (isOnline()) {
+            try {
+                const params = new URLSearchParams();
+                if (callDate) params.append('call_date', callDate);
+                if (userId) params.append('user_id', userId);
+                const response = await api.get(`/stores?${params.toString()}`);
+                const stores = response.data || [];
+                await saveStores(stores);
+                return stores;
+            } catch (error) {
+                console.warn('Failed to fetch from server, using local storage:', error);
+                return await getStores();
+            }
+        } else {
+            return await getStores();
+        }
+    },
+};
+
+// Products API
+export const productsApi = {
+    getAll: async () => {
+        if (isOnline()) {
+            try {
+                const response = await api.get('/products');
+                const products = response.data || [];
+                await saveProducts(products);
+                return products;
+            } catch (error) {
+                console.warn('Failed to fetch from server, using local storage:', error);
+                return await getProducts();
+            }
+        } else {
+            return await getProducts();
+        }
+    },
 };
 
 export const taskApi = {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { callRecordingApi, productsApi } from '../services/api';
 import SignatureCanvas from './SignatureCanvas';
 
 const STEPS = {
@@ -46,11 +46,37 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     const loadProducts = async () => {
         try {
             setLoadingProducts(true);
-            const response = await api.get('/products');
-            setProducts(response.data || []);
+            setErrors({});
+            const products = await productsApi.getAll();
+            if (products && products.length > 0) {
+                setProducts(products);
+            } else {
+                // If no products, try to get from cache
+                const { getProducts } = await import('../services/offlineStorage');
+                const cachedProducts = await getProducts();
+                if (cachedProducts && cachedProducts.length > 0) {
+                    setProducts(cachedProducts);
+                } else {
+                    setErrors({ general: 'No products available. Please check your connection.' });
+                }
+            }
         } catch (err) {
             console.error('Failed to load products', err);
-            setErrors({ general: 'Failed to load products. Please try again.' });
+            // Try to use cached products if available
+            try {
+                const { getProducts } = await import('../services/offlineStorage');
+                const cachedProducts = await getProducts();
+                if (cachedProducts && cachedProducts.length > 0) {
+                    setProducts(cachedProducts);
+                    // Clear error since we have cached products
+                    setErrors({});
+                } else {
+                    setErrors({ general: 'No products available. Please check your connection.' });
+                }
+            } catch (cacheErr) {
+                console.error('Failed to load cached products:', cacheErr);
+                setErrors({ general: 'Failed to load products. Some features may be limited.' });
+            }
         } finally {
             setLoadingProducts(false);
         }
@@ -58,39 +84,44 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
     const loadExistingRecording = async () => {
         try {
-            const response = await api.get(`/call-recordings/schedule/${callScheduleId}`);
-            setExistingRecording(response.data);
-            setSubmittedRecordingId(response.data.id);
+            const recording = await callRecordingApi.getBySchedule(callScheduleId);
+            if (!recording) {
+                return;
+            }
+            
+            setExistingRecording(recording);
+            setSubmittedRecordingId(recording.id);
             
             // Decode product IDs
-            if (response.data.product_id) {
-                const productIds = typeof response.data.product_id === 'string' 
-                    ? JSON.parse(response.data.product_id) 
-                    : response.data.product_id;
+            if (recording.product_id) {
+                const productIds = typeof recording.product_id === 'string' 
+                    ? JSON.parse(recording.product_id) 
+                    : recording.product_id;
                 setSelectedProductIds(productIds);
                 
                 // Load product details if available
-                if (response.data.products) {
-                    setSelectedProducts(response.data.products);
+                if (recording.products) {
+                    setSelectedProducts(recording.products);
                 } else {
-                    // Fetch products if not included
-                    const productResponse = await api.get('/products');
-                    const allProducts = productResponse.data || [];
-                    setSelectedProducts(allProducts.filter(p => productIds.includes(p.id)));
+                    // Try to fetch products (will use cached if offline)
+                    try {
+                        const allProducts = await productsApi.getAll();
+                        setSelectedProducts(allProducts.filter(p => productIds.includes(p.id)));
+                    } catch (err) {
+                        console.warn('Failed to load products, using IDs only', err);
+                    }
                 }
             }
             
-            setSignature(response.data.signature || '');
-            setPostActivity(response.data.post_activity || '');
+            setSignature(recording.signature || '');
+            setPostActivity(recording.post_activity || '');
             
             // If post_activity exists, go to that step
-            if (response.data.post_activity) {
+            if (recording.post_activity) {
                 setStep(STEPS.POST_ACTIVITY);
             }
         } catch (err) {
-            if (err.response?.status !== 404) {
-                console.error('Failed to load existing recording', err);
-            }
+            console.warn('No existing recording found or error loading:', err);
         }
     };
 
@@ -160,32 +191,45 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
             let response;
             if (existingRecording) {
-                response = await api.put(`/call-recordings/${existingRecording.id}`, data);
+                response = await callRecordingApi.update(existingRecording.id, data);
             } else {
-                response = await api.post('/call-recordings', data);
+                response = await callRecordingApi.create(data);
             }
 
-            setSubmittedRecordingId(response.data.id);
-            setExistingRecording(response.data);
+            setSubmittedRecordingId(response.id);
+            setExistingRecording(response);
             
             // Move to post activity step after successful submission
             setStep(STEPS.POST_ACTIVITY);
         } catch (err) {
             console.error('Error saving recording:', err);
-            console.error('Error response:', err.response?.data);
             
+            // For offline, errors are less critical
             if (err.response?.status === 422) {
                 const validationErrors = err.response.data.errors || {};
                 setErrors(validationErrors);
                 
-                // Show general error if no specific field errors
                 if (Object.keys(validationErrors).length === 0) {
                     setErrors({ general: err.response.data.message || 'Validation failed. Please check your input.' });
                 }
             } else if (err.response?.data?.message) {
                 setErrors({ general: err.response.data.message });
             } else {
-                setErrors({ general: `Failed to save recording. ${err.message || 'Please try again.'}` });
+                // If offline, this is expected - recording is saved locally
+                setErrors({ general: `Recording saved locally. Will sync when online.` });
+                // Still proceed to next step
+                if (existingRecording) {
+                    setSubmittedRecordingId(existingRecording.id);
+                } else {
+                    // Get the saved recording
+                    const { getCallRecordingBySchedule } = await import('../services/offlineStorage');
+                    const saved = await getCallRecordingBySchedule(callScheduleId);
+                    if (saved) {
+                        setSubmittedRecordingId(saved.id);
+                        setExistingRecording(saved);
+                    }
+                }
+                setStep(STEPS.POST_ACTIVITY);
             }
         } finally {
             setLoading(false);
@@ -201,18 +245,30 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
         setLoading(true);
 
         try {
-            const response = await api.put(`/call-recordings/${submittedRecordingId}/post-activity`, {
-                post_activity: postActivity.trim() || null,
-            });
+            const response = await callRecordingApi.updatePostActivity(
+                submittedRecordingId,
+                postActivity.trim() || null
+            );
 
             if (onSave) {
-                onSave(response.data);
+                onSave(response);
             }
         } catch (err) {
             if (err.response?.status === 422) {
                 setErrors(err.response.data.errors || {});
             } else {
-                setErrors({ general: 'Failed to save post activity. Please try again.' });
+                // If offline, this is expected
+                setErrors({ general: 'Post activity saved locally. Will sync when online.' });
+                if (onSave) {
+                    // Still call onSave to close the form
+                    const { getCallRecording } = await import('../services/offlineStorage');
+                    const saved = await getCallRecording(submittedRecordingId);
+                    if (saved) {
+                        onSave(saved);
+                    } else {
+                        onSave(existingRecording);
+                    }
+                }
             }
         } finally {
             setLoading(false);

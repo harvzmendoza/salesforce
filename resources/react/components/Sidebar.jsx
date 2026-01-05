@@ -17,13 +17,13 @@ export default function Sidebar() {
     };
 
     const menuItems = [
+        { path: '/attendance', label: 'Attendance', icon: '⏰' },
         { path: '/dashboard', label: 'Dashboard', icon: '📊' },
         // { path: '/tasks', label: 'Tasks', icon: '✓' },
         { path: '/inventory', label: 'Inventory', icon: '📦' },
         { path: '/collection', label: 'Collection', icon: '💰' },
-        { path: '/off-territory', label: 'Off-Territory', icon: '📍' },
-        { path: '/attendance', label: 'Attendance', icon: '⏰' },
         { path: '/stores', label: 'Stores', icon: '🏪' },
+        { path: '/off-territory', label: 'Off-Territory', icon: '📍' },
         { path: '/reports', label: 'Reports', icon: '📈' },
     ];
 

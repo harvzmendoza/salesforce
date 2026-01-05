@@ -13,6 +13,10 @@ import {
     removeFromSyncQueue,
     clearSyncQueue,
     isOnline,
+    saveCallRecording,
+    getCallRecording,
+    saveCallSchedule,
+    getCallSchedule,
 } from './offlineStorage';
 
 /**
@@ -33,61 +37,178 @@ export const syncToServer = async () => {
         try {
             let result;
 
+            const resource = item.resource || 'task';
+
             switch (item.type) {
                 case 'create':
-                    // Create on server directly (bypass taskApi to avoid queuing)
-                    const createData = { ...item.data };
-                    // Remove temp ID and local-only fields
-                    if (createData.id && createData.id.toString().startsWith('temp_')) {
-                        delete createData.id;
+                    if (resource === 'call-recording') {
+                        const createData = { ...item.data };
+                        if (createData.id && createData.id.toString().startsWith('temp_')) {
+                            delete createData.id;
+                        }
+                        delete createData.created_at;
+                        delete createData.updated_at;
+                        
+                        const createResponse = await api.post('/call-recordings', createData);
+                        result = createResponse.data;
+                        
+                        // Delete temp recording if it exists
+                        if (item.data.id && item.data.id.toString().startsWith('temp_')) {
+                            try {
+                                const { initDB } = await import('./offlineStorage');
+                                const db = await initDB();
+                                const tx = db.transaction(['callRecordings'], 'readwrite');
+                                await new Promise((resolve, reject) => {
+                                    const deleteReq = tx.objectStore('callRecordings').delete(item.data.id);
+                                    deleteReq.onsuccess = () => resolve();
+                                    deleteReq.onerror = () => reject(deleteReq.error);
+                                    tx.oncomplete = () => resolve();
+                                    tx.onerror = () => reject(tx.error);
+                                });
+                            } catch (err) {
+                                console.warn('Failed to delete temp recording:', err);
+                            }
+                        }
+                        await saveCallRecording(result);
+                    } else if (resource === 'call-schedule') {
+                        const createData = { ...item.data };
+                        if (createData.id && createData.id.toString().startsWith('temp_')) {
+                            delete createData.id;
+                        }
+                        delete createData.created_at;
+                        delete createData.updated_at;
+                        
+                        const createResponse = await api.post('/call-schedules/get-or-create', {
+                            store_id: createData.store_id,
+                            call_date: createData.call_date,
+                            user_id: createData.user_id,
+                        });
+                        result = createResponse.data;
+                        await saveCallSchedule(result);
+                    } else {
+                        // Task create
+                        const createData = { ...item.data };
+                        if (createData.id && createData.id.toString().startsWith('temp_')) {
+                            delete createData.id;
+                        }
+                        delete createData.created_at;
+                        delete createData.updated_at;
+                        
+                        const createResponse = await api.post('/tasks', createData);
+                        result = createResponse.data;
+                        
+                        if (item.data.id && item.data.id.toString().startsWith('temp_')) {
+                            await deleteTask(item.data.id);
+                        }
+                        await saveTask(result);
                     }
-                    delete createData.created_at;
-                    delete createData.updated_at;
-                    
-                    const createResponse = await api.post('/tasks', createData);
-                    result = createResponse.data;
-                    
-                    // If local task had temp ID, delete it and save with real ID
-                    if (item.data.id && item.data.id.toString().startsWith('temp_')) {
-                        await deleteTask(item.data.id);
-                    }
-                    await saveTask(result); // Update local with server response
                     break;
 
                 case 'update':
-                    // Handle temp IDs - if taskId is temp, it means it was created offline
-                    // and hasn't been synced yet, so we need to create it first
-                    if (item.taskId && item.taskId.toString().startsWith('temp_')) {
-                        // This shouldn't happen, but handle it gracefully
-                        const updateData = { ...item.data };
-                        if (updateData.id && updateData.id.toString().startsWith('temp_')) {
+                    if (resource === 'call-recording') {
+                        const recordingId = item.recordingId || item.data?.id;
+                        if (!recordingId || recordingId.toString().startsWith('temp_')) {
+                            // If temp ID, try to find the real ID from server by call_schedule_id
+                            const existing = await getCallRecording(recordingId);
+                            if (existing && existing.call_schedule_id) {
+                                try {
+                                    const scheduleResponse = await api.get(`/call-recordings/schedule/${existing.call_schedule_id}`);
+                                    if (scheduleResponse.data && scheduleResponse.data.id) {
+                                        // Found real ID, update with it
+                                        const updateData = { ...item.data };
+                                        delete updateData.id;
+                                        delete updateData.created_at;
+                                        delete updateData.updated_at;
+                                        
+                                        if (updateData.post_activity !== undefined) {
+                                            const updateResponse = await api.put(`/call-recordings/${scheduleResponse.data.id}/post-activity`, updateData);
+                                            result = updateResponse.data;
+                                        } else {
+                                            const updateResponse = await api.put(`/call-recordings/${scheduleResponse.data.id}`, updateData);
+                                            result = updateResponse.data;
+                                        }
+                                        // Delete temp and save real
+                                        try {
+                                            const { initDB } = await import('./offlineStorage');
+                                            const db = await initDB();
+                                            const tx = db.transaction(['callRecordings'], 'readwrite');
+                                            await new Promise((resolve, reject) => {
+                                                const deleteReq = tx.objectStore('callRecordings').delete(recordingId);
+                                                deleteReq.onsuccess = () => resolve();
+                                                deleteReq.onerror = () => reject(deleteReq.error);
+                                                tx.oncomplete = () => resolve();
+                                                tx.onerror = () => reject(tx.error);
+                                            });
+                                        } catch (err) {
+                                            console.warn('Failed to delete temp recording:', err);
+                                        }
+                                        await saveCallRecording(result);
+                                    } else {
+                                        // Not found on server, skip
+                                        continue;
+                                    }
+                                } catch (err) {
+                                    // Not found, skip
+                                    continue;
+                                }
+                            } else {
+                                continue;
+                            }
+                        } else {
+                            const updateData = { ...item.data };
                             delete updateData.id;
+                            delete updateData.created_at;
+                            delete updateData.updated_at;
+                            
+                            if (updateData.post_activity !== undefined && Object.keys(updateData).length === 1) {
+                                const updateResponse = await api.put(`/call-recordings/${recordingId}/post-activity`, updateData);
+                                result = updateResponse.data;
+                            } else {
+                                const updateResponse = await api.put(`/call-recordings/${recordingId}`, updateData);
+                                result = updateResponse.data;
+                            }
+                            await saveCallRecording(result);
                         }
-                        delete updateData.created_at;
-                        delete updateData.updated_at;
-                        
-                        const createResponse = await api.post('/tasks', updateData);
-                        result = createResponse.data;
-                        await deleteTask(item.taskId);
                     } else {
-                        // Update on server directly
-                        const updateData = { ...item.data };
-                        delete updateData.id;
-                        delete updateData.created_at;
-                        delete updateData.updated_at;
-                        
-                        const updateResponse = await api.put(`/tasks/${item.taskId}`, updateData);
-                        result = updateResponse.data;
+                        // Task update
+                        if (item.taskId && item.taskId.toString().startsWith('temp_')) {
+                            const updateData = { ...item.data };
+                            if (updateData.id && updateData.id.toString().startsWith('temp_')) {
+                                delete updateData.id;
+                            }
+                            delete updateData.created_at;
+                            delete updateData.updated_at;
+                            
+                            const createResponse = await api.post('/tasks', updateData);
+                            result = createResponse.data;
+                            await deleteTask(item.taskId);
+                        } else {
+                            const updateData = { ...item.data };
+                            delete updateData.id;
+                            delete updateData.created_at;
+                            delete updateData.updated_at;
+                            
+                            const updateResponse = await api.put(`/tasks/${item.taskId}`, updateData);
+                            result = updateResponse.data;
+                        }
+                        await saveTask(result);
                     }
-                    await saveTask(result);
                     break;
 
                 case 'delete':
-                    // Only delete if it's not a temp ID (temp IDs don't exist on server)
-                    if (!item.taskId.toString().startsWith('temp_')) {
-                        await api.delete(`/tasks/${item.taskId}`);
+                    if (resource === 'call-recording') {
+                        const recordingId = item.recordingId || item.data?.id;
+                        if (!recordingId || recordingId.toString().startsWith('temp_')) {
+                            continue;
+                        }
+                        await api.delete(`/call-recordings/${recordingId}`);
+                    } else {
+                        // Task delete
+                        if (!item.taskId.toString().startsWith('temp_')) {
+                            await api.delete(`/tasks/${item.taskId}`);
+                        }
+                        await deleteTask(item.taskId);
                     }
-                    await deleteTask(item.taskId);
                     break;
 
                 default:
