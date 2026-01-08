@@ -1,12 +1,12 @@
 export default function OffTerritory() {
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                Off-Territory
-            </h1>
+        <div className="bg-[#F8F9FA] p-4 sm:p-6 lg:p-8">
+            <header className="mb-6 lg:mb-8 mt-4 lg:mt-0">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2937]">Off-Territory</h1>
+            </header>
 
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow p-6 border border-gray-200 dark:border-gray-800">
-                <p className="text-gray-600 dark:text-gray-400">
+            <div className="max-w-4xl bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-4 sm:p-6 md:p-8">
+                <p className="text-[#6B7280]">
                     Off-territory activities will be available here.
                 </p>
             </div>

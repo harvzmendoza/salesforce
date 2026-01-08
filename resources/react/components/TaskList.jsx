@@ -135,83 +135,85 @@ export default function TaskList() {
     if (loading) {
         return (
             <div className="flex justify-center items-center p-8">
-                <p className="text-[#706f6c] dark:text-[#A1A09A]">Loading tasks...</p>
+                <p className="text-[#6B7280]">Loading tasks...</p>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
-                <h1 className="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">
-                    Tasks
-                </h1>
-                <div className="flex items-center gap-3">
+        <div className="bg-[#F8F9FA] p-4 sm:p-6 lg:p-8">
+            <header className="mb-6 lg:mb-8 mt-4 lg:mt-0">
+                <div className="flex justify-between items-center flex-wrap gap-3">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2937]">
+                        Tasks
+                    </h1>
                     <button
                         onClick={() => {
                             setShowForm(!showForm);
                             setEditingTask(null);
                         }}
-                        className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors"
+                        className="px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-md transition-colors"
                     >
                         {showForm ? 'Cancel' : 'Add Task'}
                     </button>
                 </div>
-            </div>
+            </header>
 
-            {error && (
-                <div className="mb-4 p-4 bg-[#fff2f2] dark:bg-[#1D0002] border border-[#F53003] dark:border-[#F61500] rounded-sm text-[#F53003] dark:text-[#FF4433]">
-                    {error}
-                    <button
-                        onClick={() => setError(null)}
-                        className="ml-2 underline"
-                    >
-                        Dismiss
-                    </button>
-                </div>
-            )}
+            <div className="max-w-4xl bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-4 sm:p-6 md:p-8">
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        {error}
+                        <button
+                            onClick={() => setError(null)}
+                            className="ml-2 underline"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
 
-            {showForm && (
-                <div className="mb-6">
-                    <TaskForm
-                        onSubmit={handleCreate}
-                        onCancel={() => setShowForm(false)}
-                    />
-                </div>
-            )}
-
-            {editingTask && (
-                <div className="mb-6">
-                    <TaskForm
-                        task={editingTask}
-                        onSubmit={(data) => handleUpdate(editingTask.id, data)}
-                        onCancel={() => setEditingTask(null)}
-                    />
-                </div>
-            )}
-
-            {tasks.length === 0 ? (
-                <div className="text-center p-8 bg-white dark:bg-[#161615] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm">
-                    <p className="text-[#706f6c] dark:text-[#A1A09A]">
-                        No tasks yet. Create your first task!
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {tasks.map((task) => (
-                        <TaskItem
-                            key={task.id}
-                            task={task}
-                            onEdit={() => {
-                                setEditingTask(task);
-                                setShowForm(false);
-                            }}
-                            onDelete={() => handleDelete(task.id)}
-                            onToggleComplete={() => handleToggleComplete(task)}
+                {showForm && (
+                    <div className="mb-6">
+                        <TaskForm
+                            onSubmit={handleCreate}
+                            onCancel={() => setShowForm(false)}
                         />
-                    ))}
-                </div>
-            )}
+                    </div>
+                )}
+
+                {editingTask && (
+                    <div className="mb-6">
+                        <TaskForm
+                            task={editingTask}
+                            onSubmit={(data) => handleUpdate(editingTask.id, data)}
+                            onCancel={() => setEditingTask(null)}
+                        />
+                    </div>
+                )}
+
+                {tasks.length === 0 ? (
+                    <div className="text-center p-8 bg-gray-50 border border-[#E0E0E0] rounded-lg">
+                        <p className="text-[#6B7280]">
+                            No tasks yet. Create your first task!
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {tasks.map((task) => (
+                            <TaskItem
+                                key={task.id}
+                                task={task}
+                                onEdit={() => {
+                                    setEditingTask(task);
+                                    setShowForm(false);
+                                }}
+                                onDelete={() => handleDelete(task.id)}
+                                onToggleComplete={() => handleToggleComplete(task)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

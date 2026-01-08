@@ -120,113 +120,76 @@ export default function Stores() {
     if (authLoading || (loading && stores.length === 0)) {
         return (
             <div className="p-6">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Loading stores...</p>
+                <p className="text-sm text-[#6B7280]">Loading stores...</p>
             </div>
         );
     }
 
     return (
-        <div className="p-6 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stores</h1>
+        <div className="bg-[#F8F9FA] p-4 sm:p-6 lg:p-8">
+            <header className="mb-6 lg:mb-8 mt-4 lg:mt-0">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2937]">Stores</h1>
+            </header>
             
-            {/* Filters */}
-            <div className="mb-6 p-4 bg-white dark:bg-[#1a1a1a] rounded-lg shadow border border-gray-200 dark:border-gray-800">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                        <label htmlFor="call_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Visit Date
-                        </label>
-                        <input
-                            type="date"
-                            id="call_date"
-                            value={callDate}
-                            onChange={handleCallDateChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC] focus:border-[#1b1b18] dark:focus:border-[#EDEDEC] bg-white dark:bg-[#161615] text-gray-900 dark:text-white"
-                        />
-                    </div>
-                    <div>
-                        <button
-                            onClick={clearFilters}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
-                        >
-                            Reset to Today
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {error && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                </div>
-            )}
-
-            {loading && stores.length > 0 && (
-                <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Refreshing...</p>
-                </div>
-            )}
-
-            {stores.length === 0 ? (
-                <div className="p-4 bg-white dark:bg-[#1a1a1a] rounded-lg shadow border border-gray-200 dark:border-gray-800">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                        No stores found for the selected date.
-                    </p>
-                </div>
-            ) : (
-                <ul className="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-[#1a1a1a] rounded-lg shadow border border-gray-200 dark:border-gray-800">
-                    {stores.map((store) => (
-                        <li key={store.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#161615] transition-colors">
+            <div className="max-w-4xl bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-4 sm:p-6 md:p-8">
+                {/* Filters */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-[#E0E0E0]">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <div className="flex-1">
+                            <label htmlFor="call_date" className="block text-sm font-medium text-[#1F2937] mb-1">
+                                Visit Date
+                            </label>
+                            <input
+                                type="date"
+                                id="call_date"
+                                value={callDate}
+                                onChange={handleCallDateChange}
+                                className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md shadow-sm focus:ring-2 focus:ring-[#6366F1] focus:border-[#6366F1] bg-white text-[#1F2937]"
+                            />
+                        </div>
+                        <div>
                             <button
-                                onClick={() => handleStoreClick(store)}
-                                className="text-sm font-medium text-gray-900 dark:text-white hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] cursor-pointer text-left w-full flex items-center justify-between gap-3"
+                                onClick={clearFilters}
+                                className="px-4 py-2 text-sm font-medium text-[#6B7280] bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                             >
-                                <span>{store.store_name}</span>
-                                <div className="flex items-center gap-2">
-                                    {store.has_recording ? (
-                                        <span
-                                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
-                                            title="Call recorded"
-                                        >
-                                            <svg
-                                                className="w-3 h-3"
-                                                fill="currentColor"
-                                                viewBox="0 0 20 20"
-                                            >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                            Recorded
-                                        </span>
-                                    ) : (
-                                        <span
-                                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                                            title="Call not recorded"
-                                        >
-                                            <svg
-                                                className="w-3 h-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M6 18L18 6M6 6l12 12"
-                                                />
-                                            </svg>
-                                            No Record
-                                        </span>
-                                    )}
-                                    {store.has_recording && (
-                                        store.has_post_activity ? (
+                                Reset to Today
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                )}
+
+                {loading && stores.length > 0 && (
+                    <div className="mb-4">
+                        <p className="text-sm text-[#6B7280]">Refreshing...</p>
+                    </div>
+                )}
+
+                {stores.length === 0 ? (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-[#E0E0E0]">
+                        <p className="text-sm text-[#6B7280]">
+                            No stores found for the selected date.
+                        </p>
+                    </div>
+                ) : (
+                    <ul className="divide-y divide-[#E0E0E0] bg-white rounded-lg border border-[#E0E0E0]">
+                        {stores.map((store) => (
+                            <li key={store.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                                <button
+                                    onClick={() => handleStoreClick(store)}
+                                    className="text-sm font-medium text-[#1F2937] hover:text-[#6366F1] cursor-pointer text-left w-full flex items-center justify-between gap-3"
+                                >
+                                    <span>{store.store_name}</span>
+                                    <div className="flex items-center gap-2">
+                                        {store.has_recording ? (
                                             <span
-                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400"
-                                                title="Post activity completed"
+                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                                                title="Call recorded"
                                             >
                                                 <svg
                                                     className="w-3 h-3"
@@ -239,12 +202,12 @@ export default function Stores() {
                                                         clipRule="evenodd"
                                                     />
                                                 </svg>
-                                                Post Activity
+                                                Recorded
                                             </span>
                                         ) : (
                                             <span
-                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400"
-                                                title="Post activity pending"
+                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600"
+                                                title="Call not recorded"
                                             >
                                                 <svg
                                                     className="w-3 h-3"
@@ -256,19 +219,60 @@ export default function Stores() {
                                                         strokeLinecap="round"
                                                         strokeLinejoin="round"
                                                         strokeWidth={2}
-                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                        d="M6 18L18 6M6 6l12 12"
                                                     />
                                                 </svg>
-                                                Pending
+                                                No Record
                                             </span>
-                                        )
-                                    )}
-                                </div>
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
+                                        )}
+                                        {store.has_recording && (
+                                            store.has_post_activity ? (
+                                                <span
+                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+                                                    title="Post activity completed"
+                                                >
+                                                    <svg
+                                                        className="w-3 h-3"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                    Post Activity
+                                                </span>
+                                            ) : (
+                                                <span
+                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
+                                                    title="Post activity pending"
+                                                >
+                                                    <svg
+                                                        className="w-3 h-3"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                        />
+                                                    </svg>
+                                                    Pending
+                                                </span>
+                                            )
+                                        )}
+                                    </div>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
 
             {showForm && callScheduleId && selectedStore && (
                 <CallRecordingForm

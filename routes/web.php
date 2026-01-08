@@ -28,8 +28,8 @@ Route::get('/manifest.webmanifest', function () {
         'short_name' => config('app.name', 'Laravel'),
         'start_url' => '/',
         'display' => 'standalone',
-        'theme_color' => '#1b1b18',
-        'background_color' => '#FDFDFC',
+        'theme_color' => '#6366F1',
+        'background_color' => '#FFFFFF',
         'icons' => [],
     ], 200)->header('Content-Type', 'application/manifest+json');
 });

@@ -20,61 +20,52 @@ function Layout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-[#FDFDFC] dark:bg-[#0a0a0a] flex flex-col md:flex-row">
+        <div className="min-h-screen bg-[#F8F9FA] flex flex-col lg:flex-row overflow-x-hidden">
             {/* Desktop sidebar */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
                 <Sidebar />
             </div>
 
             {/* Main content */}
             <div className="flex-1 w-full">
                 {/* Mobile top bar with toggle */}
-                <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur">
+                <div className="lg:hidden flex items-center justify-between bg-white p-4 border-b border-[#E0E0E0] shadow-sm">
+                    <h1 className="text-xl font-bold text-[#6366F1]">DDF</h1>
                     <button
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
-                        className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="p-2 rounded-md text-[#1F2937] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
                     >
-                        <span className="sr-only">Open navigation</span>
-                        <span className="text-xl">☰</span>
+                        <span className="material-symbols-outlined text-3xl">menu</span>
                     </button>
-                    <div className="flex items-center gap-2">
-                        <img 
-                            src={logo} 
-                            alt="Salesforce" 
-                            className="h-6 w-auto"
-                        />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                            Salesforce
-                        </span>
-                    </div>
                 </div>
 
-                {children}
+                <main className="flex-1 overflow-y-auto bg-[#F8F9FA]">
+                    {children}
+                </main>
                 <OfflineIndicator />
                 <AutoSync />
             </div>
 
             {/* Mobile sidebar overlay */}
             {isSidebarOpen && (
-                <div className="fixed inset-0 z-40 flex md:hidden">
-                    <button
-                        type="button"
-                        className="absolute inset-0 bg-black/40"
+                <>
+                    <div 
+                        className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
                         onClick={() => setIsSidebarOpen(false)}
                     />
-                    <div className="relative z-50 max-w-xs w-full h-full">
+                    <div className="fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 flex flex-col justify-between bg-white border-r border-[#E0E0E0] h-full transition-all duration-300 ease-in-out transform translate-x-0 lg:static lg:shadow-none shadow-xl">
                         <Sidebar />
                         <button
                             type="button"
                             onClick={() => setIsSidebarOpen(false)}
-                            className="absolute top-3 right-3 inline-flex items-center justify-center rounded-full p-2 bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-200 shadow-md md:hidden"
+                            className="absolute top-3 right-3 inline-flex items-center justify-center rounded-full p-2 bg-white text-[#1F2937] shadow-md lg:hidden"
                         >
                             <span className="sr-only">Close navigation</span>
-                            ✕
+                            <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

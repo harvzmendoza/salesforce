@@ -170,134 +170,130 @@ export default function Attendance() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                Attendance
-            </h1>
+        <div className="bg-[#F8F9FA] p-4 sm:p-6 lg:p-8">
+            <header className="mb-6 lg:mb-8 mt-4 lg:mt-0">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2937]">Attendance Overview</h1>
+            </header>
 
             {error && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                     {error}
                 </div>
             )}
 
             {success && (
-                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
                     {success}
                 </div>
             )}
 
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-lg p-6 space-y-6">
-                {/* Camera Section */}
-                <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                        Capture Photo
-                    </h2>
-                    <div className="space-y-4">
+            <div className="max-w-4xl bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-4 sm:p-6 md:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 md:mb-8">
+                    {/* Camera Section */}
+                    <section className="p-4 border border-[#E0E0E0] rounded-lg bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+                        <h2 className="text-base font-semibold text-[#1F2937] flex items-center flex-shrink-0">
+                            <span className="material-symbols-outlined mr-2 text-[#6B7280] text-lg">photo_camera</span>
+                            Capture Photo
+                        </h2>
                         {!capturedImage && (
-                            <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                                <video
-                                    ref={videoRef}
-                                    autoPlay
-                                    playsInline
-                                    className="w-full max-w-md mx-auto"
-                                    style={{ display: streamRef.current ? 'block' : 'none' }}
-                                />
-                                {!streamRef.current && (
-                                    <div className="p-12 text-center text-gray-500 dark:text-gray-400">
-                                        Camera preview will appear here
-                                    </div>
-                                )}
-                            </div>
+                            <button
+                                onClick={startCamera}
+                                className="w-full sm:w-auto px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-sm font-medium rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6366F1] flex items-center justify-center"
+                                disabled={!!streamRef.current}
+                            >
+                                <span className="material-symbols-outlined mr-2 text-base">camera</span>
+                                Start Camera
+                            </button>
+                        )}
+                        {streamRef.current && !capturedImage && (
+                            <button
+                                onClick={capturePhoto}
+                                className="w-full sm:w-auto px-4 py-2 bg-[#22C55E] hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors duration-200 flex items-center justify-center"
+                            >
+                                <span className="material-symbols-outlined mr-2 text-base">camera</span>
+                                Capture Photo
+                            </button>
                         )}
                         {capturedImage && (
-                            <div className="relative">
-                                <img
-                                    src={capturedImage}
-                                    alt="Captured"
-                                    className="w-full max-w-md mx-auto rounded-lg"
-                                />
-                                <button
-                                    onClick={() => {
-                                        setCapturedImage(null);
-                                        stopCamera();
-                                    }}
-                                    className="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                                >
-                                    Retake Photo
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => {
+                                    setCapturedImage(null);
+                                    stopCamera();
+                                }}
+                                className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
+                            >
+                                Retake
+                            </button>
                         )}
-                        <canvas ref={canvasRef} className="hidden" />
-                        <div className="flex gap-4">
-                            {!capturedImage && (
-                                <>
-                                    <button
-                                        onClick={startCamera}
-                                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={!!streamRef.current}
-                                    >
-                                        Start Camera
-                                    </button>
-                                    {streamRef.current && (
-                                        <button
-                                            onClick={capturePhoto}
-                                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                        >
-                                            Capture Photo
-                                        </button>
-                                    )}
-                                </>
+                    </section>
+
+                    {/* Location Section */}
+                    <section className="p-4 border border-[#E0E0E0] rounded-lg bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+                        <h2 className="text-base font-semibold text-[#1F2937] flex items-center flex-shrink-0">
+                            <span className="material-symbols-outlined mr-2 text-[#6B7280] text-lg">place</span>
+                            Location
+                        </h2>
+                        <div className="flex items-center text-xs sm:text-sm">
+                            {location ? (
+                                <p className="text-[#22C55E] font-medium flex items-center">
+                                    <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
+                                    Detected
+                                </p>
+                            ) : locationError ? (
+                                <p className="text-[#EF4444] font-medium flex items-center">
+                                    <span className="material-symbols-outlined text-sm mr-1">error</span>
+                                    Permission Denied
+                                </p>
+                            ) : (
+                                <p className="text-[#6B7280] font-medium flex items-center">
+                                    <span className="material-symbols-outlined text-sm mr-1">sync</span>
+                                    Detecting...
+                                </p>
                             )}
                         </div>
-                    </div>
+                    </section>
                 </div>
 
-                {/* Location Section */}
-                <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                        Location
-                    </h2>
-                    <div className="space-y-4">
-                        {location ? (
-                            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                <p className="text-sm text-green-700 dark:text-green-400">
-                                    <strong>Latitude:</strong> {location.latitude.toFixed(6)}
-                                </p>
-                                <p className="text-sm text-green-700 dark:text-green-400">
-                                    <strong>Longitude:</strong> {location.longitude.toFixed(6)}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                                <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                                    Trying to detect your location...
-                                </p>
-                                {locationError && (
-                                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                                        {locationError}
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                {capturedImage && (
+                    <div className="mb-6">
+                        <img
+                            src={capturedImage}
+                            alt="Captured"
+                            className="w-full max-w-md mx-auto rounded-lg border border-[#E0E0E0]"
+                        />
                     </div>
-                </div>
+                )}
+
+                {!capturedImage && streamRef.current && (
+                    <div className="mb-6 relative bg-gray-100 rounded-lg overflow-hidden">
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full max-w-md mx-auto"
+                        />
+                    </div>
+                )}
+
+                <canvas ref={canvasRef} className="hidden" />
 
                 {/* Action Buttons */}
-                <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 md:mb-10">
                     <button
                         onClick={handleTimeIn}
                         disabled={loading || !capturedImage}
-                        className="flex-1 px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg"
+                        className="w-full py-3 bg-[#22C55E] hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center text-sm md:text-base group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Processing...' : 'Time In'}
+                        <span className="material-symbols-outlined mr-2 group-hover:scale-110 transition-transform">login</span>
+                        {loading ? 'Processing...' : 'Clock In'}
                     </button>
                     <button
                         onClick={handleTimeOut}
                         disabled={loading || !capturedImage}
-                        className="flex-1 px-6 py-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg"
+                        className="w-full py-3 bg-[#EF4444] hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center text-sm md:text-base group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Processing...' : 'Time Out'}
+                        <span className="material-symbols-outlined mr-2 group-hover:scale-110 transition-transform">logout</span>
+                        {loading ? 'Processing...' : 'Clock Out'}
                     </button>
                 </div>
             </div>
