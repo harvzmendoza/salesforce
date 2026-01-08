@@ -265,13 +265,6 @@ export default function Stores() {
                                                 >
                                                     <span className="material-symbols-outlined text-lg">edit</span>
                                                 </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteRecording(store, e)}
-                                                    className="p-2 text-[#EF4444] hover:bg-red-50 rounded-md transition-colors"
-                                                    title="Delete recording"
-                                                >
-                                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                                </button>
                                             </>
                                         ) : (
                                             <button
