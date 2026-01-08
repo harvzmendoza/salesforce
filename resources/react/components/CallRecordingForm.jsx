@@ -342,14 +342,14 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
     const renderProductSelection = () => (
         <div>
-            <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
+            <h3 className="text-lg font-medium mb-4 text-[#1F2937]">
                 Step 1: Select Products
             </h3>
             
             {loadingProducts ? (
-                <p className="text-sm text-gray-600 dark:text-gray-300">Loading products...</p>
+                <p className="text-sm text-[#6B7280]">Loading products...</p>
             ) : products.length === 0 ? (
-                <p className="text-sm text-gray-600 dark:text-gray-300">No products available.</p>
+                <p className="text-sm text-[#6B7280]">No products available.</p>
             ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                     {products.map((product) => {
@@ -357,13 +357,13 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                         return (
                             <label
                                 key={product.id}
-                                className="flex items-start gap-3 p-3 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm hover:border-[#19140035] dark:hover:border-[#62605b] transition-colors cursor-pointer"
+                                className="flex items-start gap-3 p-3 border border-[#E0E0E0] rounded-lg hover:border-[#6366F1] hover:bg-gray-50 transition-colors cursor-pointer"
                             >
                                 <input
                                     type="checkbox"
                                     checked={selectedProductIds.includes(product.id)}
                                     onChange={() => handleProductToggle(product.id)}
-                                    className="mt-1 w-4 h-4 rounded border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                    className="mt-1 w-4 h-4 rounded border-[#E0E0E0] text-[#6366F1] focus:ring-2 focus:ring-[#6366F1]"
                                 />
                                 <div className="flex-1">
                                     <div className="flex items-start gap-3">
@@ -371,27 +371,27 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                             <img
                                                 src={imageUrl}
                                                 alt={product.product_name}
-                                                className="w-16 h-16 object-cover rounded border border-[#e3e3e0] dark:border-[#3E3E3A]"
+                                                className="w-16 h-16 object-cover rounded-lg border border-[#E0E0E0]"
                                                 onError={(e) => {
                                                     e.target.style.display = 'none';
                                                 }}
                                             />
                                         )}
                                         <div className="flex-1">
-                                            <p className="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                            <p className="font-medium text-[#1F2937]">
                                                 {product.product_name}
                                             </p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                            <p className="text-sm text-[#6B7280] mt-1">
                                                 {product.product_description}
                                             </p>
                                             <div className="flex gap-4 mt-2 text-sm">
-                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                <span className="text-[#1F2937]">
                                                     Price: {product.product_price}
                                                 </span>
-                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                <span className="text-[#1F2937]">
                                                     Qty: {product.product_quantity}
                                                 </span>
-                                                <span className="text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                <span className="text-[#1F2937]">
                                                     Discount: {product.product_discount}
                                                 </span>
                                             </div>
@@ -405,7 +405,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             )}
             
             {errors.products && (
-                <p className="mt-2 text-sm text-[#F53003] dark:text-[#FF4433]">
+                <p className="mt-2 text-sm text-[#EF4444]">
                     {errors.products}
                 </p>
             )}
@@ -415,12 +415,12 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     const renderProductPreview = () => {
         return (
             <div>
-                <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
+                <h3 className="text-lg font-medium mb-4 text-[#1F2937]">
                     Step 2: Review Selected Products
                 </h3>
                 
                 {selectedProducts.length === 0 ? (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">No products selected.</p>
+                    <p className="text-sm text-[#6B7280]">No products selected.</p>
                 ) : (
                     <div className="space-y-4">
                         {selectedProducts.map((product) => {
@@ -429,42 +429,42 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                             return (
                                 <div
                                     key={product.id}
-                                    className="p-4 border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm"
+                                    className="p-4 border border-[#E0E0E0] rounded-lg bg-gray-50"
                                 >
                                     <div className="flex items-start gap-3">
                                         {imageUrl && (
                                             <img
                                                 src={imageUrl}
                                                 alt={product.product_name}
-                                                className="w-20 h-20 object-cover rounded border border-[#e3e3e0] dark:border-[#3E3E3A]"
+                                                className="w-20 h-20 object-cover rounded-lg border border-[#E0E0E0]"
                                                 onError={(e) => {
                                                     e.target.style.display = 'none';
                                                 }}
                                             />
                                         )}
                                         <div className="flex-1">
-                                            <p className="font-medium text-lg text-[#1b1b18] dark:text-[#EDEDEC]">
+                                            <p className="font-medium text-lg text-[#1F2937]">
                                                 {product.product_name}
                                             </p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                            <p className="text-sm text-[#6B7280] mt-1">
                                                 {product.product_description}
                                             </p>
                                             <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
                                                 <div>
-                                                    <span className="text-gray-600 dark:text-gray-400">Price:</span>
-                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    <span className="text-[#6B7280]">Price:</span>
+                                                    <span className="ml-2 font-medium text-[#1F2937]">
                                                         {product.product_price}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-600 dark:text-gray-400">Quantity:</span>
-                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    <span className="text-[#6B7280]">Quantity:</span>
+                                                    <span className="ml-2 font-medium text-[#1F2937]">
                                                         {product.product_quantity}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-600 dark:text-gray-400">Discount:</span>
-                                                    <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                                    <span className="text-[#6B7280]">Discount:</span>
+                                                    <span className="ml-2 font-medium text-[#1F2937]">
                                                         {product.product_discount}
                                                     </span>
                                                 </div>
@@ -475,7 +475,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                                 <div>
                                                     <label
                                                         htmlFor={`quantity-${product.id}`}
-                                                        className="block text-sm font-medium mb-1 text-[#1b1b18] dark:text-[#EDEDEC]"
+                                                        className="block text-sm font-medium mb-1 text-[#1F2937]"
                                                     >
                                                         Quantity for this visit
                                                     </label>
@@ -486,14 +486,14 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                                         onChange={(e) => handleQuantityChange(product.id, e.target.value)}
                                                         min="0"
                                                         step="1"
-                                                        className="w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border-[#e3e3e0] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                                        className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md bg-white text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-[#6366F1]"
                                                         placeholder="Enter quantity"
                                                     />
                                                 </div>
                                                 <div>
                                                     <label
                                                         htmlFor={`discount-${product.id}`}
-                                                        className="block text-sm font-medium mb-1 text-[#1b1b18] dark:text-[#EDEDEC]"
+                                                        className="block text-sm font-medium mb-1 text-[#1F2937]"
                                                     >
                                                         Discount for this visit
                                                     </label>
@@ -504,7 +504,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                                         onChange={(e) => handleDiscountChange(product.id, e.target.value)}
                                                         min="0"
                                                         step="0.01"
-                                                        className="w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border-[#e3e3e0] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                                        className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md bg-white text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-[#6366F1]"
                                                         placeholder="Enter discount"
                                                     />
                                                 </div>
@@ -522,12 +522,12 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
     const renderSignature = () => (
         <div>
-            <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
+            <h3 className="text-lg font-medium mb-4 text-[#1F2937]">
                 Step 3: Digital Signature
             </h3>
             
             <div>
-                <label className="block text-sm font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]">
+                <label className="block text-sm font-medium mb-2 text-[#1F2937]">
                     Draw your signature *
                 </label>
                 <SignatureCanvas
@@ -546,17 +546,17 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
     const renderPostActivity = () => (
         <div>
-            <h3 className="text-lg font-medium mb-4 text-[#1b1b18] dark:text-[#EDEDEC]">
+            <h3 className="text-lg font-medium mb-4 text-[#1F2937]">
                 Step 4: Post Activity (Optional)
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-[#6B7280] mb-4">
                 Recording has been saved. You can optionally add post activity notes.
             </p>
             
             <div>
                 <label
                     htmlFor="post_activity"
-                    className="block text-sm font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]"
+                    className="block text-sm font-medium mb-2 text-[#1F2937]"
                 >
                     Post Activity (Optional)
                 </label>
@@ -570,15 +570,15 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                         }
                     }}
                     rows={6}
-                    className={`w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white text-[#1F2937] ${
                         errors.post_activity
-                            ? 'border-[#F53003] dark:border-[#FF4433]'
-                            : 'border-[#e3e3e0] dark:border-[#3E3E3A]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]`}
+                            ? 'border-[#EF4444]'
+                            : 'border-[#E0E0E0]'
+                    } focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-[#6366F1]`}
                     placeholder="Enter post activity"
                 />
                 {errors.post_activity && (
-                    <p className="mt-1 text-sm text-[#F53003] dark:text-[#FF4433]">
+                    <p className="mt-1 text-sm text-[#EF4444]">
                         {errors.post_activity}
                     </p>
                 )}
@@ -587,39 +587,48 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     );
 
     return (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-[#161615] border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-sm p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white border border-[#E0E0E0] rounded-xl shadow-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="mb-6">
-                    <h2 className="text-xl font-medium mb-2 text-[#1b1b18] dark:text-[#EDEDEC]">
-                        {existingRecording ? 'Edit Call Recording' : 'Create Call Recording'}
-                        {storeName && (
-                            <span className="block text-sm font-normal text-gray-600 dark:text-gray-400 mt-1">
-                                Store: {storeName}
-                            </span>
-                        )}
-                    </h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-semibold text-[#1F2937]">
+                            {existingRecording ? 'Edit Call Recording' : 'Create Call Recording'}
+                        </h2>
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[#6B7280]">close</span>
+                        </button>
+                    </div>
+                    {storeName && (
+                        <p className="text-sm text-[#6B7280] mb-4">
+                            Store: <span className="font-medium text-[#1F2937]">{storeName}</span>
+                        </p>
+                    )}
                     
                     {/* Step Indicator */}
                     <div className="flex items-center gap-2 mt-4">
                         {[1, 2, 3, 4].map((stepNum) => (
                             <div key={stepNum} className="flex items-center">
                                 <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                                         step === stepNum
-                                            ? 'bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A]'
+                                            ? 'bg-[#6366F1] text-white'
                                             : step > stepNum
-                                            ? 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-200 text-gray-600'
                                     }`}
                                 >
                                     {stepNum}
                                 </div>
                                 {stepNum < 4 && (
                                     <div
-                                        className={`w-12 h-1 mx-1 ${
+                                        className={`w-12 h-1 mx-1 rounded ${
                                             step > stepNum
-                                                ? 'bg-gray-300 dark:bg-gray-600'
-                                                : 'bg-gray-200 dark:bg-gray-700'
+                                                ? 'bg-green-100'
+                                                : 'bg-gray-200'
                                         }`}
                                     />
                                 )}
@@ -629,8 +638,8 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                 </div>
 
                 {errors.general && (
-                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                        <p className="text-sm text-red-600 dark:text-red-400">{errors.general}</p>
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-sm text-red-600">{errors.general}</p>
                     </div>
                 )}
 
@@ -642,7 +651,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                 type="button"
                                 onClick={handleBack}
                                 disabled={loading}
-                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 border border-[#E0E0E0] text-[#1F2937] rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Back
                             </button>
@@ -651,7 +660,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                 type="button"
                                 onClick={handlePostActivitySubmit}
                                 disabled={loading}
-                                className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Saving...' : 'Save Post Activity'}
                             </button>
@@ -663,17 +672,9 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                     }
                                 }}
                                 disabled={loading}
-                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 border border-[#E0E0E0] text-[#6B7280] rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Skip
-                            </button>
-                            <button
-                                type="button"
-                                onClick={onCancel}
-                                disabled={loading}
-                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Close
                             </button>
                         </div>
                     </div>
@@ -689,7 +690,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                     type="button"
                                     onClick={handleBack}
                                     disabled={loading}
-                                    className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 border border-[#E0E0E0] text-[#1F2937] rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Back
                                 </button>
@@ -700,7 +701,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                     type="button"
                                     onClick={handleNext}
                                     disabled={loading}
-                                    className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Next
                                 </button>
@@ -708,19 +709,11 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-4 py-2 bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] rounded-sm hover:bg-black dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? 'Saving...' : existingRecording ? 'Update Recording' : 'Submit Recording'}
                                 </button>
                             )}
-                            <button
-                                type="button"
-                                onClick={onCancel}
-                                disabled={loading}
-                                className="px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm hover:border-[#1915014a] dark:hover:border-[#62605b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Cancel
-                            </button>
                         </div>
                     </form>
                 )}

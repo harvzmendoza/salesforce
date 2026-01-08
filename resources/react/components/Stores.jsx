@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { storesApi, callScheduleApi } from '../services/api';
+import { storesApi, callScheduleApi, callRecordingApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CallRecordingForm from './CallRecordingForm';
 
@@ -103,6 +103,37 @@ export default function Stores() {
         }
     };
 
+    const handleEditRecording = async (store) => {
+        await handleStoreClick(store);
+    };
+
+    const handleDeleteRecording = async (store, e) => {
+        e.stopPropagation();
+        
+        if (!window.confirm(`Are you sure you want to delete the recording for ${store.store_name}?`)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+            
+            if (store.call_schedule_id) {
+                const recording = await callRecordingApi.getBySchedule(store.call_schedule_id);
+                if (recording) {
+                    await callRecordingApi.delete(recording.id);
+                    // Refresh stores list
+                    await fetchStores();
+                }
+            }
+        } catch (err) {
+            console.error('Failed to delete recording', err);
+            setError('Failed to delete recording. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleFormSave = () => {
         setShowForm(false);
         setSelectedStore(null);
@@ -177,97 +208,82 @@ export default function Stores() {
                         </p>
                     </div>
                 ) : (
-                    <ul className="divide-y divide-[#E0E0E0] bg-white rounded-lg border border-[#E0E0E0]">
+                    <ul className="divide-y divide-[#E0E0E0] bg-white rounded-lg border border-[#E0E0E0] overflow-hidden">
                         {stores.map((store) => (
-                            <li key={store.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
-                                <button
-                                    onClick={() => handleStoreClick(store)}
-                                    className="text-sm font-medium text-[#1F2937] hover:text-[#6366F1] cursor-pointer text-left w-full flex items-center justify-between gap-3"
-                                >
-                                    <span>{store.store_name}</span>
-                                    <div className="flex items-center gap-2">
-                                        {store.has_recording ? (
-                                            <span
-                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
-                                                title="Call recorded"
-                                            >
-                                                <svg
-                                                    className="w-3 h-3"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 20 20"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                                Recorded
-                                            </span>
-                                        ) : (
-                                            <span
-                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600"
-                                                title="Call not recorded"
-                                            >
-                                                <svg
-                                                    className="w-3 h-3"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                                No Record
-                                            </span>
-                                        )}
-                                        {store.has_recording && (
-                                            store.has_post_activity ? (
+                            <li key={store.id} className="px-4 py-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm font-semibold text-[#1F2937] mb-2">
+                                            {store.store_name}
+                                        </h3>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {store.has_recording ? (
                                                 <span
-                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
-                                                    title="Post activity completed"
+                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+                                                    title="Call recorded"
                                                 >
-                                                    <svg
-                                                        className="w-3 h-3"
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path
-                                                            fillRule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clipRule="evenodd"
-                                                        />
-                                                    </svg>
-                                                    Post Activity
+                                                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                                                    Recorded
                                                 </span>
                                             ) : (
                                                 <span
-                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
-                                                    title="Post activity pending"
+                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600"
+                                                    title="Call not recorded"
                                                 >
-                                                    <svg
-                                                        className="w-3 h-3"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                        />
-                                                    </svg>
-                                                    Pending
+                                                    <span className="material-symbols-outlined text-sm">cancel</span>
+                                                    No Record
                                                 </span>
-                                            )
+                                            )}
+                                            {store.has_recording && (
+                                                store.has_post_activity ? (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+                                                        title="Post activity completed"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">task_alt</span>
+                                                        Post Activity
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800"
+                                                        title="Post activity pending"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">schedule</span>
+                                                        Pending
+                                                    </span>
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {store.has_recording ? (
+                                            <>
+                                                <button
+                                                    onClick={() => handleEditRecording(store)}
+                                                    className="p-2 text-[#6366F1] hover:bg-[#6366F1]/10 rounded-md transition-colors"
+                                                    title="Edit recording"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteRecording(store, e)}
+                                                    className="p-2 text-[#EF4444] hover:bg-red-50 rounded-md transition-colors"
+                                                    title="Delete recording"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleStoreClick(store)}
+                                                className="px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-base">add</span>
+                                                Create Recording
+                                            </button>
                                         )}
                                     </div>
-                                </button>
+                                </div>
                             </li>
                         ))}
                     </ul>

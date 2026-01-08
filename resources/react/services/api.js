@@ -8,6 +8,7 @@ import {
     saveCallRecording,
     getCallRecording,
     getCallRecordingBySchedule,
+    deleteCallRecording,
     saveCallSchedule,
     getCallSchedule,
     getCallScheduleByStoreDateUser,
@@ -203,6 +204,30 @@ export const callRecordingApi = {
                 data: { post_activity: postActivity },
             });
             return updatedRecording;
+        }
+    },
+
+    delete: async (id) => {
+        if (isOnline()) {
+            try {
+                await api.delete(`/call-recordings/${id}`);
+                await deleteCallRecording(id);
+            } catch (error) {
+                console.warn('Failed to delete on server, deleting locally:', error);
+                await deleteCallRecording(id);
+                await addToSyncQueue({
+                    type: 'delete',
+                    resource: 'call-recording',
+                    recordingId: id,
+                });
+            }
+        } else {
+            await deleteCallRecording(id);
+            await addToSyncQueue({
+                type: 'delete',
+                resource: 'call-recording',
+                recordingId: id,
+            });
         }
     },
 };

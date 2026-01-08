@@ -298,6 +298,18 @@ export const getCallRecordingBySchedule = async (callScheduleId) => {
     });
 };
 
+export const deleteCallRecording = async (id) => {
+    const database = await getDB();
+    const transaction = database.transaction([CALL_RECORDINGS_STORE], 'readwrite');
+    const store = transaction.objectStore(CALL_RECORDINGS_STORE);
+
+    return new Promise((resolve, reject) => {
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+};
+
 // Call Schedules Storage Functions
 export const saveCallSchedule = async (schedule) => {
     const database = await getDB();
