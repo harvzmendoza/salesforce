@@ -23,7 +23,9 @@ class UpdateCallRecordingRequest extends FormRequest
     {
         return [
             'product_id' => ['required', 'array'],
-            'product_id.*' => ['integer', 'exists:products,id'],
+            'product_id.*.id' => ['required', 'integer', 'exists:products,id'],
+            'product_id.*.quantity' => ['nullable', 'integer', 'min:0'],
+            'product_id.*.discount' => ['nullable', 'numeric', 'min:0'],
             'signature' => ['required', 'string'],
             'post_activity' => ['nullable', 'string'],
         ];

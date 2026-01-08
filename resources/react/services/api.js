@@ -66,6 +66,13 @@ export const callRecordingApi = {
                 await saveCallRecording(response.data);
                 return response.data;
             } catch (error) {
+                // If the server explicitly reports the recording does not exist,
+                // do NOT fall back to any stale local cache – just treat it as missing.
+                if (error.response && error.response.status === 404) {
+                    console.warn('Recording not found on server, ignoring local cache.');
+                    return null;
+                }
+
                 console.warn('Failed to fetch from server, using local storage:', error);
                 return await getCallRecordingBySchedule(callScheduleId);
             }

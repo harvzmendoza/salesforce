@@ -15,16 +15,36 @@ class CallRecordingsTable
         return $table
             ->columns([
                 TextColumn::make('call_schedule_id')
+                    ->label('Call Schedule ID')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('price')
-                    ->searchable(),
-                TextColumn::make('quantity')
-                    ->searchable(),
-                TextColumn::make('discount')
-                    ->searchable(),
+                TextColumn::make('product_id')
+                    ->label('Products')
+                    ->formatStateUsing(static function ($state): string {
+                        if (! is_array($state)) {
+                            return (string) $state;
+                        }
+
+                        return collect($state)
+                            ->map(static function ($item) {
+                                if (is_array($item) && isset($item['id'])) {
+                                    $quantity = $item['quantity'] ?? null;
+                                    $discount = $item['discount'] ?? null;
+
+                                    return sprintf(
+                                        'ID: %s%s%s',
+                                        $item['id'],
+                                        $quantity !== null ? " / Qty: {$quantity}" : '',
+                                        $discount !== null ? " / Disc: {$discount}" : ''
+                                    );
+                                }
+
+                                return (string) $item;
+                            })
+                            ->implode('; ');
+                    })
+                    ->wrap()
+                    ->toggleable(),
                 TextColumn::make('signature')
                     ->searchable(),
                 TextColumn::make('created_at')

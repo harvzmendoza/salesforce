@@ -54,10 +54,33 @@ class CallRecordingController extends Controller
 
         // Decode product_id JSON and load products
         if ($recording->product_id) {
-            $productIds = json_decode($recording->product_id, true);
-            if (is_array($productIds)) {
+            $productData = json_decode($recording->product_id, true) ?? [];
+
+            $productIds = [];
+
+            if (is_array($productData) && $productData !== []) {
+                // New format: array of objects with id, quantity, discount
+                if (isset($productData[0]) && is_array($productData[0]) && array_key_exists('id', $productData[0])) {
+                    $productIds = collect($productData)->pluck('id')->all();
+                } else {
+                    // Legacy format: array of product IDs only
+                    $productIds = $productData;
+                    $productData = collect($productIds)
+                        ->map(static fn (int $id) => [
+                            'id' => $id,
+                            'quantity' => null,
+                            'discount' => null,
+                        ])
+                        ->all();
+                }
+            }
+
+            if ($productIds !== []) {
                 $recording->products = \App\Models\Product::whereIn('id', $productIds)->get();
             }
+
+            // Expose decoded product data (including quantity & discount) to the client
+            $recording->product_items = $productData;
         }
 
         return response()->json($recording->load('callSchedule'));

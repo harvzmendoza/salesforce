@@ -28,6 +28,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
     const [products, setProducts] = useState([]);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [selectedProducts, setSelectedProducts] = useState([]);
+    const [productDetails, setProductDetails] = useState({});
     const [signature, setSignature] = useState('');
     const [postActivity, setPostActivity] = useState('');
     const [loading, setLoading] = useState(false);
@@ -92,12 +93,39 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
             setExistingRecording(recording);
             setSubmittedRecordingId(recording.id);
             
-            // Decode product IDs
+            // Decode product details / IDs
             if (recording.product_id) {
-                const productIds = typeof recording.product_id === 'string' 
-                    ? JSON.parse(recording.product_id) 
-                    : recording.product_id;
+                let productData = recording.product_id;
+
+                if (typeof productData === 'string') {
+                    try {
+                        productData = JSON.parse(productData);
+                    } catch {
+                        productData = [];
+                    }
+                }
+
+                let productIds = [];
+                const details = {};
+
+                if (Array.isArray(productData) && productData.length > 0) {
+                    // New format: array of objects with id, quantity, discount
+                    if (typeof productData[0] === 'object' && productData[0] !== null && 'id' in productData[0]) {
+                        productIds = productData.map((item) => item.id);
+                        productData.forEach((item) => {
+                            details[item.id] = {
+                                quantity: item.quantity != null ? String(item.quantity) : '',
+                                discount: item.discount != null ? String(item.discount) : '',
+                            };
+                        });
+                    } else {
+                        // Legacy format: array of product IDs only
+                        productIds = productData;
+                    }
+                }
+
                 setSelectedProductIds(productIds);
+                setProductDetails(details);
                 
                 // Load product details if available
                 if (recording.products) {
@@ -106,7 +134,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                     // Try to fetch products (will use cached if offline)
                     try {
                         const allProducts = await productsApi.getAll();
-                        setSelectedProducts(allProducts.filter(p => productIds.includes(p.id)));
+                        setSelectedProducts(allProducts.filter((p) => productIds.includes(p.id)));
                     } catch (err) {
                         console.warn('Failed to load products, using IDs only', err);
                     }
@@ -127,12 +155,39 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
 
     const handleProductToggle = (productId) => {
         setSelectedProductIds((prev) => {
-            if (prev.includes(productId)) {
-                return prev.filter((id) => id !== productId);
-            } else {
-                return [...prev, productId];
+            const isSelected = prev.includes(productId);
+            const next = isSelected ? prev.filter((id) => id !== productId) : [...prev, productId];
+
+            // If deselecting, remove any stored details for this product
+            if (isSelected) {
+                setProductDetails((prevDetails) => {
+                    const { [productId]: _removed, ...rest } = prevDetails;
+                    return rest;
+                });
             }
+
+            return next;
         });
+    };
+
+    const handleQuantityChange = (productId, value) => {
+        setProductDetails((prev) => ({
+            ...prev,
+            [productId]: {
+                ...(prev[productId] || {}),
+                quantity: value,
+            },
+        }));
+    };
+
+    const handleDiscountChange = (productId, value) => {
+        setProductDetails((prev) => ({
+            ...prev,
+            [productId]: {
+                ...(prev[productId] || {}),
+                discount: value,
+            },
+        }));
     };
 
     const handleNext = () => {
@@ -183,9 +238,19 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
         setLoading(true);
 
         try {
+            const productPayload = selectedProductIds.map((productId) => {
+                const detail = productDetails[productId] || {};
+
+                return {
+                    id: productId,
+                    quantity: detail.quantity ? parseInt(detail.quantity, 10) : null,
+                    discount: detail.discount ? parseFloat(detail.discount) : null,
+                };
+            });
+
             const data = {
                 call_schedule_id: callScheduleId,
-                product_id: selectedProductIds,
+                product_id: productPayload,
                 signature: typeof signature === 'string' ? signature.trim() : signature,
             };
 
@@ -360,6 +425,7 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                     <div className="space-y-4">
                         {selectedProducts.map((product) => {
                             const imageUrl = getImageUrl(product.product_image);
+                            const detail = productDetails[product.id] || {};
                             return (
                                 <div
                                     key={product.id}
@@ -401,6 +467,46 @@ export default function CallRecordingForm({ callScheduleId, storeName, onSave, o
                                                     <span className="ml-2 font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
                                                         {product.product_discount}
                                                     </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Per-product quantity & discount for this recording */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                                <div>
+                                                    <label
+                                                        htmlFor={`quantity-${product.id}`}
+                                                        className="block text-sm font-medium mb-1 text-[#1b1b18] dark:text-[#EDEDEC]"
+                                                    >
+                                                        Quantity for this visit
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        id={`quantity-${product.id}`}
+                                                        value={detail.quantity || ''}
+                                                        onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                                                        min="0"
+                                                        step="1"
+                                                        className="w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border-[#e3e3e0] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                                        placeholder="Enter quantity"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label
+                                                        htmlFor={`discount-${product.id}`}
+                                                        className="block text-sm font-medium mb-1 text-[#1b1b18] dark:text-[#EDEDEC]"
+                                                    >
+                                                        Discount for this visit
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        id={`discount-${product.id}`}
+                                                        value={detail.discount || ''}
+                                                        onChange={(e) => handleDiscountChange(product.id, e.target.value)}
+                                                        min="0"
+                                                        step="0.01"
+                                                        className="w-full px-3 py-2 border rounded-sm bg-white dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border-[#e3e3e0] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
+                                                        placeholder="Enter discount"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

@@ -17,6 +17,16 @@ class CallRecording extends Model
         'post_activity',
     ];
 
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'product_id' => 'array',
+        ];
+    }
+
     public function callSchedule(): BelongsTo
     {
         return $this->belongsTo(CallSchedule::class);
